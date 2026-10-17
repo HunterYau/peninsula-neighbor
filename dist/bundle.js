@@ -162,7 +162,7 @@ function planner() {
 function renderPlan() {
   const box=document.querySelector('#itinerary');
   if(!state.plan.length){box.innerHTML=empty('Your next little adventure starts here.','Choose a mood and a neighborhood, or add a place from Explore.');return;}
-  box.innerHTML=`<div class="plan-summary"><div><strong>${state.plan.length} stops · ${Math.round(planMinutes(state.plan,places)/60*10)/10} hours</strong><p>Approximate visit time + travel allowance</p></div><button class="btn small" data-export-plan>Save itinerary ↓</button></div>${state.plan.map((id,i)=>{const p=places.find(p=>p.id===id);return `<article class="plan-item"><span class="step">${i+1}</span><div><h3>${e(p.name)}</h3><p>${e(p.area)} · About ${p.duration} min</p><button class="link-button" data-detail="${p.id}">Details & official information ↗</button></div><div class="plan-controls"><button data-move="${p.id}" data-direction="-1" aria-label="Move ${e(p.name)} earlier" ${i===0?'disabled':''}>↑</button><button data-move="${p.id}" data-direction="1" aria-label="Move ${e(p.name)} later" ${i===state.plan.length-1?'disabled':''}>↓</button><button data-remove-plan="${p.id}" aria-label="Remove ${e(p.name)}">×</button></div></article>`;}).join('')}<div class="notice">Check opening hours and current access with each official source. The travel allowance is a planning estimate.</div>`;
+  box.innerHTML=`<div class="plan-summary"><div><strong>${state.plan.length} ${state.plan.length===1?'stop':'stops'} · ${Math.round(planMinutes(state.plan,places)/60*10)/10} ${planMinutes(state.plan,places)===60?'hour':'hours'}</strong><p>Approximate visit time + travel allowance</p></div><button class="btn small" data-export-plan>Save itinerary ↓</button></div>${state.plan.map((id,i)=>{const p=places.find(p=>p.id===id);return `<article class="plan-item"><span class="step">${i+1}</span><div><h3>${e(p.name)}</h3><p>${e(p.area)} · About ${p.duration} min</p><button class="link-button" data-detail="${p.id}">Details & official information ↗</button></div><div class="plan-controls"><button data-move="${p.id}" data-direction="-1" aria-label="Move ${e(p.name)} earlier" ${i===0?'disabled':''}>↑</button><button data-move="${p.id}" data-direction="1" aria-label="Move ${e(p.name)} later" ${i===state.plan.length-1?'disabled':''}>↓</button><button data-remove-plan="${p.id}" aria-label="Remove ${e(p.name)}">×</button></div></article>`;}).join('')}<div class="notice">Check opening hours and current access with each official source. The travel allowance is a planning estimate.</div>`;
 }
 
 function resources() {
@@ -185,6 +185,7 @@ function render() {
   if(!storageOK)main.insertAdjacentHTML('afterbegin','<p class="notice">Browser storage is unavailable. Changes will last for this visit.</p>');
   document.title=`${({home:'A little closer to home',explore:'Explore',events:'What’s on',volunteer:'Give back',board:'Neighbor board',planner:'My day',resources:'Local resources'})[route]||'Discover'} · Peninsula Neighbor`;
 }
+document.querySelector('.skip').addEventListener('click',event=>{event.preventDefault();main.focus();main.scrollIntoView();});
 window.addEventListener('hashchange',()=>{dialog.close();render();window.scrollTo(0,0);main.focus({preventScroll:true});});
 document.addEventListener('click',event=>{
   const b=event.target.closest('button');if(!b)return;

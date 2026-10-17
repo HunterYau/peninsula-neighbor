@@ -36,7 +36,7 @@ npm test
 
 ## Deploy
 
-The site is static. Publish `dist/` with GitHub Pages, Cloudflare Pages, Netlify, or any static host. No server-side runtime is needed. The included GitHub Actions workflow deploys `dist/` to GitHub Pages when Pages is configured to use **GitHub Actions** in repository settings. Hash-based routes work under a repository subpath.
+The site is static. Publish `dist/` with GitHub Pages, Cloudflare Pages, Netlify, or any static host. No server-side runtime is needed. Pushes run verification in GitHub Actions. To deploy `dist/` to GitHub Pages, configure Pages to use **GitHub Actions** in repository settings, then run the workflow manually. Private repositories require a GitHub plan that supports private-repository Pages. Hash-based routes work under a repository subpath.
 
 The `.openai/hosting.json` manifest also records the optional private Sites hosting project. It contains no credentials.
 
