@@ -67,7 +67,7 @@ Directory information was curated October 17, 2026 from official city, library, 
 
 ## Accessibility and privacy
 
-Semantic landmarks, a skip link, keyboard controls, visible focus indicators, labeled forms, native modal focus handling, reduced-motion support, and responsive mobile layouts are included. Optional Google Fonts use system-font fallbacks. Fonts are the only third-party resource loaded by the app; external links open organizer websites. The app requests no location access and sends no board or planner content to a server.
+Semantic landmarks, a skip link, keyboard controls, visible focus indicators, labeled forms, native modal focus handling, reduced-motion support, and responsive mobile layouts are included. Fonts use local system fallbacks. The app loads no third-party resources; external links open organizer websites. The app requests no location access and sends no board or planner content to a server.
 
 ## Next steps for a public community pilot
 
