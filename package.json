@@ -1,0 +1,9 @@
+{
+  "name": "peninsula-neighbor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A neighborhood companion for Palos Verdes Estates and the Peninsula, built for Neighborhacks.",
+  "scripts": { "dev": "python3 -m http.server 4173 --directory dist", "build": "python3 scripts/build.py", "test": "node --test", "check": "node --check dist/app.js && node --check dist/core.js && node --check dist/bundle.js" },
+  "engines": { "node": ">=20" }
+}
