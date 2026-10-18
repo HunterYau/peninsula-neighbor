@@ -1,10 +1,12 @@
 import {z} from 'zod';
+import {photoSchema,decodePhoto} from './photos.ts';
+import {refreshEventPhotos} from './event-photos.ts';
 import {areas,eventCategories} from './validation.ts';
 import {discoverySources,evidenceUrl,sourceFor} from './discovery-sources.ts';
 import type {Database} from './api.ts';
 const text=(min:number,max:number)=>z.string().trim().min(min).max(max);
-export const discoveryEventSchema=z.object({source:text(1,60),occurrence:z.string().max(200).default(''),url:z.string().max(1000),title:text(4,160),body:text(10,2000),area:z.enum(areas),location:text(4,200),starts:z.string().datetime(),ends:z.string().datetime(),category:z.enum(eventCategories),cost:text(1,120).default('Check organizer'),status:z.enum(['published','cancelled','review']).default('published')}).refine(e=>evidenceUrl(e.url,e.source),'Use a matching approved organizer source.').refine(e=>Date.parse(e.ends)>Date.parse(e.starts)&&Date.parse(e.ends)-Date.parse(e.starts)<=7*86400000,'Use a timed event lasting up to seven days.');
-export const discoveryUpdateSchema=z.object({crawl:z.boolean().default(false),events:z.array(discoveryEventSchema).max(120).default([]),checks:z.array(z.object({source:text(1,60).refine(s=>!!sourceFor(s)),state:z.enum(['ok','unavailable']),note:text(1,240)})).max(20).default([])});
+export const discoveryEventSchema=z.object({photo:photoSchema.nullable().optional(),source:text(1,60),occurrence:z.string().max(200).default(''),url:z.string().max(1000),title:text(4,160),body:text(10,2000),area:z.enum(areas),location:text(4,200),starts:z.string().datetime(),ends:z.string().datetime(),category:z.enum(eventCategories),cost:text(1,120).default('Check organizer'),status:z.enum(['published','cancelled','review']).default('published')}).refine(e=>evidenceUrl(e.url,e.source),'Use a matching approved organizer source.').refine(e=>Date.parse(e.ends)>Date.parse(e.starts)&&Date.parse(e.ends)-Date.parse(e.starts)<=7*86400000,'Use a timed event lasting up to seven days.');
+export const discoveryUpdateSchema=z.object({crawl:z.boolean().default(false),events:z.array(discoveryEventSchema).max(120).default([]),photos:z.array(z.object({source:text(1,60),url:z.string().max(1000),photo:photoSchema.nullable()}).refine(p=>evidenceUrl(p.url,p.source),'Use a matching approved source URL.')).max(80).default([]),checks:z.array(z.object({source:text(1,60).refine(s=>!!sourceFor(s)),state:z.enum(['ok','unavailable']),note:text(1,240)})).max(20).default([])});
 export type DiscoveredEvent=z.infer<typeof discoveryEventSchema>;
 export const sightingSchema=z.object({title:text(4,100),body:text(10,1000),area:z.enum(areas),location:text(4,160),url:z.string().max(1000).default('').refine(s=>{if(!s)return true;try{const u=new URL(s);return u.protocol==='https:'&&!u.username&&!u.password;}catch{return false;}},'Use a public https link.'),hours:z.number().int().min(1).max(24).default(4)});
 const clean=(s:string)=>s.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();
@@ -79,19 +81,21 @@ export async function saveDiscoveryUpdate(db:Database,data:z.infer<typeof discov
   const checked=now.toISOString(),time=now.valueOf();const crawled=data.crawl?await crawlCalendars():{events:[],checks:[]};
   const events=[...crawled.events,...data.events],checks=[...crawled.checks,...data.checks];
   const accepted=events.filter(e=>Date.parse(e.ends)>time&&Date.parse(e.starts)<=time+366*86400000);
-  const queries=accepted.map(e=>db.prepare('INSERT INTO discoveries (id,dedupe,source,url,title,body,area,location,starts,ends,category,cost,status,checked,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(dedupe) DO UPDATE SET source=excluded.source,url=excluded.url,title=excluded.title,body=excluded.body,area=excluded.area,location=excluded.location,starts=excluded.starts,ends=excluded.ends,category=excluded.category,cost=excluded.cost,status=excluded.status,checked=excluded.checked').bind(crypto.randomUUID(),e.occurrence?`${e.source}|${e.occurrence}`:eventKey(e),e.source,e.url,e.title,e.body,e.area,e.location,new Date(e.starts).toISOString(),new Date(e.ends).toISOString(),e.category,e.cost,e.status,checked,checked));
+  const queries=accepted.map(e=>db.prepare(`INSERT INTO discoveries (id,dedupe,source,url,title,body,area,location,starts,ends,category,cost,status,photo,checked,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,COALESCE(?,''),?,?) ON CONFLICT(dedupe) DO UPDATE SET source=excluded.source,url=excluded.url,title=excluded.title,body=excluded.body,area=excluded.area,location=excluded.location,starts=excluded.starts,ends=excluded.ends,category=excluded.category,cost=excluded.cost,status=excluded.status,checked=excluded.checked,photo=COALESCE(?,discoveries.photo)`).bind(crypto.randomUUID(),e.occurrence?`${e.source}|${e.occurrence}`:eventKey(e),e.source,e.url,e.title,e.body,e.area,e.location,new Date(e.starts).toISOString(),new Date(e.ends).toISOString(),e.category,e.cost,e.status,e.photo===undefined?null:e.photo?JSON.stringify(e.photo):'',checked,checked,e.photo===undefined?null:e.photo?JSON.stringify(e.photo):''));
+  for(const p of data.photos)queries.push(db.prepare('UPDATE discoveries SET photo=?,photo_checked=? WHERE source=? AND url=?').bind(p.photo?JSON.stringify(p.photo):'',checked,p.source,p.url));
   // A failed check never removes old events or advances their checked timestamp.
   for(const c of checks)queries.push(db.prepare('INSERT INTO discovery_checks (source,attempted,succeeded,state,note,count) VALUES (?,?,?,?,?,?) ON CONFLICT(source) DO UPDATE SET attempted=excluded.attempted,succeeded=COALESCE(excluded.succeeded,discovery_checks.succeeded),state=excluded.state,note=excluded.note,count=excluded.count').bind(c.source,checked,c.state==='ok'?checked:null,c.state,c.note,accepted.filter(e=>e.source===c.source).length));
   queries.push(db.prepare('DELETE FROM discoveries WHERE ends<?').bind(new Date(time-30*86400000).toISOString()));
   queries.push(db.prepare('DELETE FROM sightings WHERE expires<?').bind(new Date(time-7*86400000).toISOString()));
   for(let i=0;i<queries.length;i+=60)await db.batch(queries.slice(i,i+60));
-  return {accepted:accepted.length,review:accepted.filter(e=>e.status==='review').length,checks};
+  const images=data.crawl?await refreshEventPhotos(db,now):null;
+  return {images,photoUpdates:data.photos.length,accepted:accepted.length,review:accepted.filter(e=>e.status==='review').length,checks};
 }
 export async function readDiscoveries(db:Database,now=new Date()){
   const checked=now.toISOString();
-  const rows=(await db.prepare("SELECT id,source,url,title,body,area,location,starts,ends,category,cost,status,checked,created FROM discoveries WHERE ends>? AND status<>'review' ORDER BY starts LIMIT 200").bind(checked).all()).results;
+  const rows=(await db.prepare("SELECT id,source,url,title,body,area,location,starts,ends,category,cost,status,photo,checked,created FROM discoveries WHERE ends>? AND status<>'review' ORDER BY starts LIMIT 200").bind(checked).all()).results;
   const checks=(await db.prepare('SELECT * FROM discovery_checks').all()).results;
   const seen=new Set<string>();
   const unique=rows.filter((e:any)=>{const key=eventKey(e);if(seen.has(key))return false;seen.add(key);return true;});
-  return {events:unique.map((e:any)=>({...e,stale:now.valueOf()-Date.parse(e.checked)>48*3600000})),sources:discoverySources.map(s=>({...s,feed:undefined,check:checks.find(c=>c.source===s.id)||null})),updated:checks.reduce((v:string,c:any)=>c.succeeded&&c.succeeded>v?c.succeeded:v,'')||null};
+  return {events:unique.map((e:any)=>({...e,photo:decodePhoto(e.photo),stale:now.valueOf()-Date.parse(e.checked)>48*3600000})),sources:discoverySources.map(s=>({...s,feed:undefined,check:checks.find(c=>c.source===s.id)||null})),updated:checks.reduce((v:string,c:any)=>c.succeeded&&c.succeeded>v?c.succeeded:v,'')||null};
 }

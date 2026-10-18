@@ -4,6 +4,8 @@
 
 Peninsula Neighbor brings local discovery, practical services, neighbor-to-neighbor help, events, volunteering, and personal planning into one consistent workspace. It is a full-stack React application with a shared Cloudflare D1 database, not a set of browser-only demo forms.
 
+Real local photographs now appear on the home and Explore pages, with credited organizer imagery on event listings when available. See [photo sources and image behavior](docs/PHOTOS.md).
+
 ## Product
 
 | Area | Working capabilities |
@@ -36,6 +38,7 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_flippant_northstar.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_lowly_lily_hollister.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_parched_bastion.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_smiling_rawhide_kid.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 

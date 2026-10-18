@@ -57,3 +57,14 @@ Automated tests exercise actual SQL and API logic, but do not establish resident
 - Production administrator authorization uses a Sites runtime secret configured from the platform-verified Site owner's email; it is absent from source and client code. Missing configuration fails closed. Local mock administration is only in the portable development configuration.
 - Production build uses the official Sites packaging workflow. No new dependencies or paid APIs were introduced. The existing daily automation is preserved.
 - Browser visual and mobile interaction inspection remains unverified under the earlier preview-navigation approval restriction. No alternate browser surface was used. Responsive CSS and native controls are included, but automated database and HTTP results do not establish visual quality.
+
+## Photo refresh
+
+- Added four credited, reusable Palos Verdes photographs, checked against their Commons file pages and inspected locally. The home header, selected place previews/details, and Explore banner use real place photography. Source/license links are visible in the interface and documented in `public/photos/credits.json` and `docs/PHOTOS.md`.
+- 45 tests and TypeScript checks pass. New checks cover image metadata validation, public HTTPS links, logo/source filtering, cached and robots-aware event-page image discovery, preservation/removal of image metadata across imports, pending-image moderation, event/catalog serialization, and bundled JPEG/license evidence.
+- The official Sites build passes. The append-only image migration adds photo metadata to events and discoveries plus an image-check timestamp; it applied locally in three commands.
+- Local HTTP returned 200 for the redesigned home page and all four JPEGs with the correct image content type. The home HTML includes the photo header, image asset reference, and photographer credit.
+- Three genuine organizer event images were persisted through the unattended writer and returned by both discovery and unified catalog APIs: PVLD Unraveled artwork, PVLD ACOTAR artwork, and RPV Pumpkin Decorating flyer. These are source-linked organizer images, not stock photos or invented event photographs.
+- Existing local HTTP regression checks for sign-in, discussion/reply/resolution, event approval, RSVP/cancellation, and private service records still pass, with disposable records removed.
+- The existing daily discovery instructions are now `discovery-v2-photos`. No schedule duplication or audience change is needed.
+- Desktop/mobile visual inspection is pending explicit permission for the project's HTTP preview, because automatic approval review previously rejected preview navigation as a workaround for a blocked file URL. No alternate browser surface has been used.

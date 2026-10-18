@@ -1,0 +1,58 @@
+[
+  {
+    "filename": "abalone-cove.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Abalone_Cove_-_D600_Long_Exposure_(8061975568).jpg",
+    "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Abalone_Cove_-_D600_Long_Exposure_%288061975568%29.jpg",
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Abalone_Cove_-_D600_Long_Exposure_%288061975568%29.jpg/1280px-Abalone_Cove_-_D600_Long_Exposure_%288061975568%29.jpg",
+    "title": "Abalone Cove - D600 Long Exposure (8061975568).jpg",
+    "author": "n4rwhals",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "width": 1280,
+    "height": 656,
+    "changes": "Resized Wikimedia thumbnail; website may crop for display.",
+    "bytes": 166495
+  },
+  {
+    "filename": "malaga-cove-library.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Malaga_Cove_Library.jpg",
+    "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/8/83/Malaga_Cove_Library.jpg",
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Malaga_Cove_Library.jpg/1280px-Malaga_Cove_Library.jpg",
+    "title": "Malaga Cove Library.jpg",
+    "author": "Sgerbic",
+    "license": "Public domain",
+    "license_url": "https://commons.wikimedia.org/wiki/Template:PD-self",
+    "width": 1280,
+    "height": 853,
+    "changes": "Resized Wikimedia thumbnail; website may crop for display.",
+    "bytes": 224454
+  },
+  {
+    "filename": "malaga-cove.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Malaga_cove.jpg",
+    "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Malaga_cove.jpg",
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Malaga_cove.jpg/1280px-Malaga_cove.jpg",
+    "title": "Malaga cove.jpg",
+    "author": "The original uploader was Cardinalngold at English Wikipedia.",
+    "license": "Public domain",
+    "license_url": "https://commons.wikimedia.org/wiki/Template:PD-self",
+    "width": 1280,
+    "height": 719,
+    "changes": "Resized Wikimedia thumbnail; website may crop for display.",
+    "bytes": 282421
+  },
+  {
+    "filename": "point-vicente-coast.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Point_Vicente_Lighthouse_on_Cliff.jpeg",
+    "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Point_Vicente_Lighthouse_on_Cliff.jpeg",
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Point_Vicente_Lighthouse_on_Cliff.jpeg/1280px-Point_Vicente_Lighthouse_on_Cliff.jpeg",
+    "title": "Point Vicente Lighthouse on Cliff.jpeg",
+    "author": "Nhostetler",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "width": 1280,
+    "height": 960,
+    "changes": "Resized Wikimedia thumbnail; website may crop for display.",
+    "bytes": 426315
+  }
+]
