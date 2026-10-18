@@ -8,6 +8,11 @@ const calendarDate=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>{const date
 export const profileSchema=z.object({name:text(2,40),area:z.enum(areas),bio:z.string().trim().max(240).default('')});
 export const postSchema=z.object({type:z.enum(postTypes),title:text(4,100),body:text(10,2000),area:z.enum(areas),topic:z.enum(topics),days:z.number().int().min(1).max(90).default(30)});
 export const commentSchema=z.object({body:text(2,1000)});
+export const contactSchema=z.object({postId:text(1,100),body:text(2,2000)});
+export const messageSchema=z.object({body:text(2,2000)});
+export const readMessageSchema=z.object({messageId:text(1,100)});
+export const conversationSchema=z.object({closed:z.boolean()});
+export const postStatusSchema=z.object({status:z.enum(['open','resolved'])});
 export const eventSchema=z.object({title:text(4,100),body:text(10,3000),area:z.enum(areas),location:text(4,160),starts:z.string().datetime(),ends:z.string().datetime(),category:z.enum(eventCategories),access:z.string().trim().max(300).default(''),capacity:z.number().int().min(0).max(1000).default(0)}).refine(v=>new Date(v.ends)>new Date(v.starts),{message:'End time must be after start time.'}).refine(v=>new Date(v.ends).valueOf()-new Date(v.starts).valueOf()<=7*86400000,{message:'Events can last up to seven days.'});
 export const preferenceSchema=z.object({saved:z.array(text(1,100)).max(200),plan:z.array(text(1,100)).max(12),area:z.enum(areas),prep:z.array(text(1,80)).max(40),reminders:z.array(z.object({id:text(1,100),title:text(1,100),date:calendarDate,repeat:z.enum(['none','weekly','monthly']),done:z.boolean()})).max(100),interests:z.array(text(1,50)).max(10),largeText:z.boolean()});
 export const hourSchema=z.object({org:text(2,100),date:calendarDate,minutes:z.number().int().min(5).max(1440),notes:z.string().trim().max(500).default('')});

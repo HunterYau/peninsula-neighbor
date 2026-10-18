@@ -10,6 +10,7 @@ Peninsula Neighbor brings local discovery, practical services, neighbor-to-neigh
 | --- | --- |
 | Today | Daily overview, live PVE-area weather, NWS weather-alert status, community activity, upcoming events, reminders, and preparedness progress |
 | Community | Publish offers, requests, free exchanges, lost-and-found notes, recommendations, and ideas; topic and area context; server search and pagination; replies; author controls; resolved state; expiry; reporting; complementary help suggestions |
+| Private inbox | Start a conversation from a post; participant-only access; unread tracking; earlier-message pagination; conversation closure; export of loaded messages |
 | Events | Member-created events, categories and time filters, capacity-limited RSVPs, cancellation, personal calendar export, and official organizer calendars |
 | Explore | 14 sourced local destinations and businesses; area/category/search/free/saved filters; interactive OpenStreetMap map with approximate listing positions; directions; bookmarks; add-to-plan |
 | Local services | 23 practical resources, searchable by everyday terms such as bus, trash, power, school, study, permits, and senior support |
@@ -30,6 +31,7 @@ Requires **Node.js 24** and npm. No paid APIs or personal API keys are required.
 npm run install:ci
 npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_polite_kate_bishop.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_flippant_northstar.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 
@@ -71,7 +73,9 @@ docs/VERIFICATION.md         Current verification evidence and limits
 
 ## Responsible operation
 
-Write actions require sign-in and same-origin requests. Authors control their posts and events. Shared posts expire; personal records do not become public. An atomic RSVP insert protects capacity. Per-member hourly write quotas limit abuse. Reports are stored privately for the site owner to review through the D1 administration tools; there is no automatic moderation or guaranteed response. A public community pilot still needs an assigned moderation process and organizer outreach.
+Write actions require sign-in and same-origin requests. Authors control their posts and events. Private inbox access is limited to the two participants through the app. Either participant can close a conversation; only the closer can reopen it. Site operators retain database administration access. Private-message contents never enter public feed queries. Shared posts expire; personal records do not become public. An atomic RSVP insert protects capacity. Per-member hourly write quotas limit abuse. Reports are stored privately for the site owner to review through the D1 administration tools; there is no automatic moderation or guaranteed response. A public community pilot still needs an assigned moderation process and organizer outreach.
+
+Messages refresh when a conversation is opened or refreshed; no email or push notification is sent. Workspace backups do not contain private messages; each conversation can export the messages currently loaded.
 
 The app does not verify residency, certify volunteer hours, reserve outside venues, submit city requests, or send emergency notifications. Maps and travel estimates are approximate. External calendars remain with their organizers; the app does not imply that a program has a confirmed date or opening without a source. Check official information before acting.
 

@@ -15,6 +15,19 @@ export function suggestDay(places:Place[],options:{area:string;category:string;m
   search([],candidates,0,0);return best;
 }
 export function searchDirectory(places:Place[],services:Service[],query:string){const terms=query.toLowerCase().trim().split(/\s+/).filter(Boolean);return [...places.map(p=>({id:p.id,title:p.name,description:p.description,area:p.area,kind:'place',keywords:[p.category,...p.tags].join(' ')})),...services.map(s=>({id:s.id,title:s.name,description:s.description,area:s.area,kind:'service',keywords:s.keywords.join(' ')}))].map(item=>({...item,score:terms.reduce((score,t)=>score+(item.title.toLowerCase().includes(t)?5:0)+(item.keywords.toLowerCase().includes(t)?3:0)+(item.description.toLowerCase().includes(t)?1:0),0)})).filter(item=>!terms.length||terms.every(t=>`${item.title} ${item.description} ${item.keywords} ${item.area}`.toLowerCase().includes(t))).sort((a,b)=>b.score-a.score);}
+const localActions=[
+  {view:'community',title:'Community board',keywords:'help offer request exchange free lost found pets neighbors posts'},
+  {view:'inbox',title:'Private inbox',keywords:'message messages chat conversation contact private'},
+  {view:'events',title:'Events & RSVPs',keywords:'calendar event weekend attend join gathering'},
+  {view:'explore',title:'Explore places',keywords:'park coffee library shops map nearby'},
+  {view:'services',title:'Local services',keywords:'city utilities transit support report official'},
+  {view:'volunteer',title:'Volunteer & service record',keywords:'hours contribution giving volunteering'},
+  {view:'planner',title:'Day planner & reminders',keywords:'itinerary route trip plan reminder return collection'},
+  {view:'prepared',title:'Household preparedness',keywords:'emergency alert evacuation zone checklist weather'},
+  {view:'guides',title:'Local guides',keywords:'new resident student family outdoors support'},
+  {view:'saved',title:'Saved items & settings',keywords:'bookmarks favorites profile backup import export text account'}
+];
+export function searchLocalActions(query:string){const terms=query.toLowerCase().trim().split(/\s+/).filter(Boolean);return terms.length?localActions.filter(action=>terms.every(term=>`${action.title} ${action.keywords}`.toLowerCase().includes(term))):[];}
 export function matchingPosts(post:Post,posts:Post[]){const opposite=post.type==='Ask for help'?'Offer help':post.type==='Offer help'?'Ask for help':null;if(!opposite)return[];const words=post.title.toLowerCase().match(/[a-z]{4,}/g)||[];return posts.filter(p=>p.id!==post.id&&p.type===opposite&&p.status==='open').map(p=>({post:p,score:(p.topic===post.topic?4:0)+(p.area===post.area?2:0)+words.filter(w=>p.title.toLowerCase().includes(w)||p.body.toLowerCase().includes(w)).length})).filter(p=>p.score>=4).sort((a,b)=>b.score-a.score).slice(0,3).map(p=>p.post);}
 export function advanceReminder(reminder:Reminder):Reminder{if(reminder.repeat==='none')return {...reminder,done:!reminder.done};const date=new Date(reminder.date+'T12:00:00');if(reminder.repeat==='weekly')date.setDate(date.getDate()+7);else{const day=date.getDate();date.setDate(1);date.setMonth(date.getMonth()+1);const last=new Date(date.getFullYear(),date.getMonth()+1,0).getDate();date.setDate(Math.min(day,last));}return {...reminder,date:`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`,done:false};}
 export function mergePreferences(a:Preferences,b:Preferences):Preferences{return {...b,saved:[...new Set([...a.saved,...b.saved])].slice(0,200),plan:b.plan.length?b.plan:a.plan,prep:[...new Set([...a.prep,...b.prep])].slice(0,40),reminders:[...new Map([...a.reminders,...b.reminders].map(r=>[r.id,r])).values()].slice(0,100)};}

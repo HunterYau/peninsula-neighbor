@@ -1,4 +1,4 @@
-import {profileSchema,postSchema,commentSchema,eventSchema,preferenceSchema,hourSchema,reportSchema,defaultPreferences} from './validation.ts';
+import {profileSchema,postSchema,commentSchema,eventSchema,preferenceSchema,hourSchema,reportSchema,defaultPreferences,contactSchema,messageSchema,conversationSchema,postStatusSchema,readMessageSchema} from './validation.ts';
 import type {ZodType} from 'zod';
 export type Identity={userId:string;fullName:string|null};
 export type Database={prepare(sql:string):{bind(...args:unknown[]):any;first():Promise<any>;all():Promise<{results:any[]}>;run():Promise<any>};batch(queries:any[]):Promise<any[]>};
@@ -56,7 +56,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
       if(id&&['PATCH','DELETE'].includes(method)){
         const p=await one('SELECT author FROM posts WHERE id=?',id);if(!p)throw new HttpError(404,'Post not found.');if(p.author!==uid)throw new HttpError(403,'Only the author can change this post.');
         if(method==='DELETE'){await run('DELETE FROM posts WHERE id=?',id);return json({ok:true});}
-        const data=await req.json() as {status?:string};if(!['open','resolved'].includes(data.status||''))throw new HttpError(400,'Choose open or resolved.');await run('UPDATE posts SET status=? WHERE id=?',data.status,id);return json({ok:true});
+        const data=await input(req,postStatusSchema);await run('UPDATE posts SET status=? WHERE id=?',data.status,id);return json({ok:true});
       }
     }
     if(path[0]==='comments'&&path[1]&&method==='DELETE'){
@@ -76,6 +76,53 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
         if(!await one('SELECT event FROM rsvps WHERE event=? AND user=?',id,uid))throw new HttpError(409,'This event has reached capacity.');return json({ok:true});
       }
       if(id&&method==='DELETE'){const entry=await one('SELECT author FROM events WHERE id=?',id);if(!entry)throw new HttpError(404,'Event not found.');if(entry.author!==uid)throw new HttpError(403,'Only the organizer can remove this event.');await run('DELETE FROM events WHERE id=?',id);return json({ok:true});}
+    }
+    if(path[0]==='inbox'){
+      if(!user)throw new HttpError(401,'Sign in to use your private inbox.');
+      const id=path[1];
+      if(!id&&method==='GET')return json({conversations:(await all(`SELECT c.id,c.title,c.created,c.updated,u.name,COALESCE((SELECT m.body FROM messages m WHERE m.conversation=c.id ORDER BY m.created DESC,m.id DESC LIMIT 1),'') AS preview,(SELECT COUNT(*) FROM messages m WHERE m.conversation=c.id AND m.author<>? AND m.created||'|'||m.id>CASE WHEN c.host=? THEN c.host_read ELSE c.guest_read END) AS unread,(c.closed_by IS NOT NULL) AS closed,(c.closed_by=?) AS canReopen FROM conversations c JOIN profiles u ON u.id=CASE WHEN c.host=? THEN c.guest ELSE c.host END WHERE c.host=? OR c.guest=? ORDER BY c.updated DESC LIMIT 200`,uid,uid,uid,uid,uid,uid)).map(c=>({...c,closed:!!c.closed,canReopen:!!c.canReopen}))});
+      if(!id&&method==='POST'){
+        const data=await input(req,contactSchema),post=await one('SELECT author,title,status,expires FROM posts WHERE id=?',data.postId);
+        if(!post)throw new HttpError(404,'This post was removed.');
+        if(post.author===uid)throw new HttpError(400,'You cannot message yourself about your own post.');
+        if(post.status!=='open'||post.expires<now())throw new HttpError(409,'This post is no longer accepting new conversations.');
+        const created=now();
+        await run('INSERT OR IGNORE INTO conversations (id,post,host,guest,title,created,updated,host_read,guest_read) VALUES (?,?,?,?,?,?,?,?,?)',crypto.randomUUID(),data.postId,post.author,uid,post.title,created,created,'',created);
+        const thread=await one('SELECT id,closed_by FROM conversations WHERE post=? AND guest=?',data.postId,uid);
+        if(thread.closed_by)throw new HttpError(409,'This conversation is closed. You can find it in your inbox.');
+        const messageId=crypto.randomUUID();
+        await db.batch([stmt('INSERT INTO messages (id,conversation,author,body,created) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM conversations WHERE id=? AND closed_by IS NULL)',messageId,thread.id,uid,data.body,created,thread.id),stmt('UPDATE conversations SET updated=? WHERE id=? AND EXISTS(SELECT 1 FROM messages WHERE id=?)',created,thread.id,messageId)]);
+        if(!await one('SELECT id FROM messages WHERE id=?',messageId))throw new HttpError(409,'This conversation is closed.');
+        return json({id:thread.id},201);
+      }
+      if(id){
+        const thread=await one('SELECT * FROM conversations WHERE id=? AND (host=? OR guest=?)',id,uid,uid);
+        if(!thread)throw new HttpError(404,'Conversation not found.');
+        if(method==='GET'){
+          const before=(url.searchParams.get('before')||'').slice(0,140);
+          const rows=await all("SELECT id,body,created,(author=?) AS mine FROM messages WHERE conversation=? AND (?='' OR created||'|'||id<?) ORDER BY created DESC,id DESC LIMIT 51",uid,id,before,before);
+          const page=rows.slice(0,50).reverse();
+          return json({conversation:{id,title:thread.title,name:(await one('SELECT name FROM profiles WHERE id=?',thread.host===uid?thread.guest:thread.host)).name,closed:!!thread.closed_by,canReopen:thread.closed_by===uid},messages:page.map(m=>({...m,mine:!!m.mine})),older:rows.length>50?`${page[0].created}|${page[0].id}`:null});
+        }
+        if(path[2]==='read'&&method==='POST'){
+          const data=await input(req,readMessageSchema);
+          // Only advance to a message actually visible to this member; never mark future arrivals read.
+          const message=await one("SELECT created||'|'||id AS cursor FROM messages WHERE conversation=? AND id=?",id,data.messageId);if(!message)throw new HttpError(404,'Message not found.');
+          const column=thread.host===uid?'host_read':'guest_read';
+          await run(`UPDATE conversations SET ${column}=MAX(${column},?) WHERE id=?`,message.cursor,id);return json({ok:true});
+        }
+        if(method==='POST'){
+          const data=await input(req,messageSchema);if(thread.closed_by)throw new HttpError(409,'This conversation is closed.');const created=now();
+          const messageId=crypto.randomUUID();
+          await db.batch([stmt('INSERT INTO messages (id,conversation,author,body,created) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM conversations WHERE id=? AND closed_by IS NULL)',messageId,id,uid,data.body,created,id),stmt('UPDATE conversations SET updated=? WHERE id=? AND EXISTS(SELECT 1 FROM messages WHERE id=?)',created,id,messageId)]);
+          if(!await one('SELECT id FROM messages WHERE id=?',messageId))throw new HttpError(409,'This conversation is closed.');return json({ok:true},201);
+        }
+        if(method==='PATCH'){
+          const data=await input(req,conversationSchema);if(!data.closed&&thread.closed_by&&thread.closed_by!==uid)throw new HttpError(403,'Only the person who closed the conversation can reopen it.');
+          if(data.closed&&thread.closed_by&&thread.closed_by!==uid)throw new HttpError(409,'The other participant has already closed this conversation.');
+          await run('UPDATE conversations SET closed_by=? WHERE id=?',data.closed?uid:null,id);return json({ok:true});
+        }
+      }
     }
     if(path[0]==='hours'){
       if(!user)throw new HttpError(401,'Sign in to keep your service record.');

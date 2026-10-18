@@ -7,7 +7,7 @@ assert.ok(cookie,'Development sign-in must return a cookie.');
 async function call(path,method='GET',body){const response=await fetch(`${base}/api/${path}`,{method,headers:{Cookie:cookie,Origin:base,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json();assert.ok(response.ok,`${method} ${path}: ${JSON.stringify(data)}`);return data;}
 const created=[];
 try{
-  const{profile}=await call('me');assert.ok(profile.name);
+  const{profile}=await call('me');assert.ok(profile.name);assert.ok(Array.isArray((await call('inbox')).conversations));
   const post=await call('posts','POST',{type:'Offer help',title:'QA test — disposable service offer',body:'This is a local automated verification entry and will be removed.',area:'Palos Verdes Estates',topic:'Learning & skills',days:7});created.push(['posts',post.id]);
   await call(`posts/${post.id}/comments`,'POST',{body:'Disposable verification reply.'});
   const replies=await call(`posts/${post.id}/comments`);assert.equal(replies.comments.length,1);
