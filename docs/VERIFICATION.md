@@ -1,13 +1,26 @@
-# Verification record
+# Version 2 verification
 
-Verified October 17, 2026.
+Work performed October 17–18, 2026. This file is updated as gates finish; it is not a claim that an untested feature is verified.
 
-- Dependency-free build completed successfully.
-- All 14 automated tests passed: seven core behavior tests and a portable-bundle render check for each of the seven routes.
-- JavaScript syntax checks passed for app, core, and generated bundle.
-- Git whitespace checks passed.
-- Chrome rendered the homepage with the original coastal artwork and complete navigation.
-- Browser interaction checks confirmed: search narrowed the directory to Malaga Cove Library; saving updated the bookmark state; the detail dialog opened and Escape closed it; adding a place updated My day; the map showed the filtered destination; generating a three-hour plan produced three stops totaling about 2.9 hours including estimated transfers.
-- Public visibility was declined by automatic approval review, so the repository was created privately.
+## Completed evidence
 
-Limits: the local preview server was blocked by sandbox permissions. Browser checks used the standalone file build. A private Sites deployment was attempted through its supported workflow, but source synchronization failed because the environment could not resolve `git.chatgpt-team.site`. A live hosted deployment and GitHub Actions execution have not been verified. Narrow-screen rendering and full manual form/export round-trips remain for broader QA; responsive breakpoints and corresponding core behaviors are implemented.
+- Clean full-stack build: Vinext client, server, and Cloudflare Worker artifacts generated successfully.
+- TypeScript check passed after the full-stack implementation.
+- 16 automated tests passed using Node’s standard test runner and a fresh SQLite database loaded from the actual generated migration.
+- Tests cover anonymous/cross-origin rejection; cross-user shared posts and replies; author-only changes; input validation; bound search parameters; RSVP idempotency, capacity, cancellation and ownership; private preferences and hours; report persistence; expiry and write quota; planner constraints; cross-resource search; end-of-month reminder behavior; calendar escaping and UTF-8 folding; backup validation/merge; CSV formula protection; and complementary help suggestions.
+- Local D1 migration applied successfully (14 SQL commands).
+- Local server returned HTTP 200 for the app, real empty shared post results, and signed-out profile state.
+- Development sign-in returned a profile and default account preferences through the real HTTP routes.
+- Local live-condition route returned forecast data and a successful empty NWS-alert response, with source timestamp and no errors.
+- Real HTTP smoke test passed through development sign-in, post/reply/resolution, event creation, RSVP/cancellation, and private service-record operations. All disposable records were removed.
+- Secondary text colors used in the readability pass were checked numerically: `#63757d` on white has a contrast ratio of approximately 4.8:1.
+
+## Pending verification
+
+- Browser layout and interaction inspection: automatic approval review rejected preview navigation after the old file URL was blocked. Explicit approval for the new HTTP development URL has been requested; no alternate browser surface was used.
+- Mobile layouts, keyboard paths, and full UI form/export round-trips still require the browser pass.
+- Hosted deployment and current GitHub commit state will be recorded after publication.
+
+## Limits to claims
+
+Automated tests exercise actual SQL and API logic, but do not establish resident adoption, visual quality, hardware/mobile compatibility across all browsers, or official organizer endorsement. Local development identity is simulated by the starter and is separate from hosted platform sign-in. No evidence of interviews or measurable community outcomes has been invented.

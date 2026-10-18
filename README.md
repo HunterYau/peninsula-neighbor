@@ -1,76 +1,80 @@
 # Peninsula Neighbor
 
-**A little closer to home.** A community website for Palos Verdes Estates and the surrounding Palos Verdes Peninsula, built for Neighborhacks.
+**Your Peninsula, connected.** An everyday community platform for Palos Verdes Estates and the surrounding Peninsula, built for Neighborhood Hacks.
 
-Local opportunities are scattered between city websites, the library district, and conservation organizations. Peninsula Neighbor brings useful starting points together and helps residents turn discovery into a plan.
+Peninsula Neighbor brings local discovery, practical services, neighbor-to-neighbor help, events, volunteering, and personal planning into one consistent workspace. It is a full-stack React application with a shared Cloudflare D1 database, not a set of browser-only demo forms.
 
-## What works
+## Product
 
-- **Discover:** a responsive community homepage with an original coastal illustration.
-- **Explore:** eight curated local destinations, full-text search, city and category filters, bookmarks, and an interactive schematic map.
-- **My day:** generate an itinerary by area, interest, and available time; add places, reorder stops, remove stops, and export an itinerary.
-- **What's on:** official calendar links plus personal events with portable `.ics` calendar export.
-- **Give back:** volunteer directory with category filters and direct organizer links.
-- **Neighbor board:** create, filter, and remove personal offers, requests, lost-and-found notes, and ideas.
-- **Your data:** persistent browser storage plus JSON backup export/import with validation.
-- **Local resources:** transparent source attribution and direct official links.
+| Area | Working capabilities |
+| --- | --- |
+| Today | Daily overview, live PVE-area weather, NWS weather-alert status, community activity, upcoming events, reminders, and preparedness progress |
+| Community | Publish offers, requests, free exchanges, lost-and-found notes, recommendations, and ideas; topic and area context; server search and pagination; replies; author controls; resolved state; expiry; reporting; complementary help suggestions |
+| Events | Member-created events, categories and time filters, capacity-limited RSVPs, cancellation, personal calendar export, and official organizer calendars |
+| Explore | 14 sourced local destinations and businesses; area/category/search/free/saved filters; interactive OpenStreetMap map with approximate listing positions; directions; bookmarks; add-to-plan |
+| Local services | 23 practical resources, searchable by everyday terms such as bus, trash, power, school, study, permits, and senior support |
+| Volunteer | Organizer-linked opportunities, bookmarks, a private service-hours record, and CSV export |
+| Be prepared | Personal checklist, direct official guidance, weather outlook, NWS alerts with explicit feed-failure states, and printable text export |
+| Local guides | New resident, family, student, outdoors, and support guides with relevant services and places |
+| My planner | Day suggestions constrained by time, area, interests, free visits, and travel mode; distance-aware transfers; reordering; itinerary export; one-time and recurring reminders; calendar export |
+| Saved & settings | Saved resources, display profile, larger-text preference, account sync, JSON backup/import, and v1 backup compatibility |
+| Across the app | Responsive navigation, keyboard search (`⌘/Ctrl K`), labeled controls, native dialogs, reduced-motion support, installable web manifest, and an offline reminder page |
+
+There are no invented users, fake reviews, manufactured attendance counts, or sponsored rankings. An empty community board stays empty until someone contributes.
 
 ## Run locally
 
-No dependencies, API keys, account, or build service are needed.
+Requires **Node.js 24** and npm. No paid APIs or personal API keys are required.
 
 ```sh
-python3 scripts/build.py
-python3 -m http.server 4173 --directory dist
-```
-
-Open `http://localhost:4173`. You can also open `dist/index.html` directly for a quick preview; a local HTTP server gives browser storage a stable origin. The generated `bundle.js` allows the page to work without JavaScript module loading from a server.
-
-With Node 20+ installed:
-
-```sh
+npm run install:ci
 npm run build
-npm run check
-npm test
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_polite_kate_bishop.sql
+npm run dev -- --hostname 127.0.0.1
 ```
 
-## Deploy
+Open the printed local URL, normally `http://127.0.0.1:5173/`. The portable starter supplies a **development-only** sign-in route at `/signin-with-chatgpt?return_to=/`. It uses a simulated identity for local development; hosted sign-in is handled by the Sites platform. Never expose the dev server publicly.
 
-The site is static. Publish `dist/` with GitHub Pages, Cloudflare Pages, Netlify, or any static host. No server-side runtime is needed. Pushes run verification in GitHub Actions. To deploy `dist/` to GitHub Pages, configure Pages to use **GitHub Actions** in repository settings, then run the workflow manually. Private repositories require a GitHub plan that supports private-repository Pages. Hash-based routes work under a repository subpath.
+Apply each SQL migration once, in order. Local database state lives in ignored `.wrangler/state/`. A production preview can be started with `npm start` after building and migrating.
 
-The `.openai/hosting.json` manifest also records the optional private Sites hosting project. It contains no credentials.
+```sh
+npm run check   # TypeScript
+npm test        # Core logic and multi-user database/API behavior
+npm run build  # Client, server, and Worker artifact
+```
 
-## Project structure
+## Architecture
+
+- **UI:** React 19, TypeScript, Vinext/Vite, Lucide icons, custom responsive CSS.
+- **API:** same-origin route handlers; Zod validation; bound SQL statements.
+- **Persistence:** Cloudflare D1; Drizzle schema and generated migrations. Personal data is scoped to the authenticated user on the server.
+- **Identity:** dispatch-owned Sign in with ChatGPT; no custom password handling. Email is never included in public posts or event data.
+- **Local state:** preferences are also stored on-device for convenience and offline reminders. Sign-out clears the local workspace. A new signed-in workspace can preserve anonymous device preferences.
+- **Conditions:** server-fetched Open-Meteo and NWS data with bounded timeouts and short caching. The client does not request location permission.
+- **Deployment:** the tracked Sites manifest provisions the `DB` binding. Publish through the Sites workflow; migrations are applied by the hosting platform. This full-stack version cannot be deployed to GitHub Pages as static HTML.
 
 ```text
-dist/
-  index.html        # Accessible page shell
-  styles.css        # Responsive layout and visual system
-  data.js           # Curated places, source URLs, and opportunity directory
-  core.js           # Search, planner, storage validation, calendar serialization
-  app.js            # Views, forms, dialog, storage, and interactions
-  bundle.js         # Generated portable build; do not edit directly
-  assets/           # Original SVG illustration and identity
-scripts/build.py    # Dependency-free bundler
-tests/core.test.js   # Behavioral tests using the Node standard library
-docs/DEMO.md        # Demo walkthrough and honest project scope
-docs/SOURCES.md     # Content provenance and maintenance notes
+app/ui/CommunityApp.tsx       Interface and workflows
+app/api/[...path]/route.ts   Shared community API adapter
+app/api/conditions/route.ts  Cached weather and weather-alert adapter
+lib/api.ts                  Authorization and data operations
+lib/catalog.ts              Curated local content and provenance links
+lib/tools.ts                Search, planning, calendar, reminder, and matching logic
+lib/validation.ts           Input and preference schemas
+db/schema.ts                Database schema
+drizzle/                    Immutable generated migrations
+tests/                      API tests against SQLite and pure behavior tests
+docs/RESEARCH.md             Research, comparison, and product priorities
+docs/DEMO.md                 Demo walkthrough
+docs/VERIFICATION.md         Current verification evidence and limits
 ```
 
-## Data and scope
+## Responsible operation
 
-This is a working browser-local hackathon prototype. **Posts and events are not published to other neighbors.** Bookmarks, plans, posts, and personal events live in `localStorage` on the current origin. There are no user accounts, shared database, live closure feed, or live event aggregation. Calendar links go directly to organizers for current dates. The map is an illustrated guide, not a routing or navigation service; durations and the 20-minute transfer allowance are estimates.
+Write actions require sign-in and same-origin requests. Authors control their posts and events. Shared posts expire; personal records do not become public. An atomic RSVP insert protects capacity. Per-member hourly write quotas limit abuse. Reports are stored privately for the site owner to review through the D1 administration tools; there is no automatic moderation or guaranteed response. A public community pilot still needs an assigned moderation process and organizer outreach.
 
-Changing device, browser, or hostname creates separate local storage. Export a backup before moving between deployments. Storage failures are handled in memory with a visible notice. Imports accept only the supported backup version, validate records, limit size, and merge by record ID. User content is escaped before rendering.
+The app does not verify residency, certify volunteer hours, reserve outside venues, submit city requests, or send emergency notifications. Maps and travel estimates are approximate. External calendars remain with their organizers; the app does not imply that a program has a confirmed date or opening without a source. Check official information before acting.
 
-Directory information was curated October 17, 2026 from official city, library, and organization websites. Check organizers for current hours, access, availability, and volunteer eligibility. See [sources](docs/SOURCES.md).
+The private hosted audience and private GitHub repository remain private unless their owner explicitly approves a change. For submission, review the current hackathon requirements, including its public-repository requirement. Do not claim interviews, resident adoption, or outcomes that have not occurred.
 
-## Accessibility and privacy
-
-Semantic landmarks, a skip link, keyboard controls, visible focus indicators, labeled forms, native modal focus handling, reduced-motion support, and responsive mobile layouts are included. Fonts use local system fallbacks. The app loads no third-party resources; external links open organizer websites. The app requests no location access and sends no board or planner content to a server.
-
-## Next steps for a public community pilot
-
-Before enabling shared posts: add authentication, a shared database, moderation/reporting, clear deletion controls, and abuse prevention. Verify local needs with residents and organizers. Add organizer-approved event ingestion only with a reliable update and expiration process.
-
-Built with AI assistance. Review the applicable hackathon's current rules and disclose tools as required. This project is independent of the cities, PVLD, and other linked organizations.
+The original v1 source is preserved in Git history and the local `base-v1` tag. This project was created with AI assistance; disclose tools in the submission as required. All product code is inspectable. Local facts and primary sources are documented in [SOURCES.md](docs/SOURCES.md).

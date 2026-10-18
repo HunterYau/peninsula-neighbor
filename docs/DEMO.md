@@ -1,26 +1,18 @@
-# Two-minute demo
+# Working demo walkthrough
 
-1. Open Discover. Explain the problem: information is spread across local city, library, and volunteer websites.
-2. Open Explore. Search “library”, filter to Palos Verdes Estates, and save Malaga Cove Library with the heart.
-3. Switch to Local map. Open a numbered place and follow its official source or add it to My day.
-4. Open My day. Suggest a three-hour afternoon, change the stop order, and download the itinerary. Saved favorites remain below.
-5. Open Give back. Filter to Library & learning and follow a genuine organizer opportunity.
-6. Open What's on. Browse an official calendar, then add a personal event and export its `.ics` file.
-7. Open Neighbor board. Save an offer such as “Extra native plant seedlings”, filter to Offer, and reload. Explain that it is saved locally and has not been posted publicly.
-8. Open Local resources & sources. Export a data backup.
+## Suggested 3–5 minute story
 
-## What to say honestly
+1. **Today:** show the dashboard and explain the problem hypothesis: useful local information is spread between many organizations. Point out the clear weather timestamp and source.
+2. **One search:** use `⌘/Ctrl K`, search `bus`, and open the transit resource. Try `power`, `study`, or `permit`. The same interaction reaches places and everyday services.
+3. **Explore and plan:** filter to free visits in PVE, save a library or park, then suggest a three-hour day. Reorder stops, switch travel mode, and export the itinerary. Explain that routing estimates and access are not live.
+4. **Community:** sign in. Publish a test offer or request with clear context. A second signed-in member can reply. Show resolved state and author controls. Explicitly label test content when demonstrating.
+5. **Events:** create a future event with capacity and access notes. RSVP from another account, demonstrate a full event refusing another RSVP, then export the calendar file.
+6. **Volunteer:** open a sourced organizer opportunity, log completed service time, and export the self-reported record.
+7. **Personal tools:** add a monthly reminder, complete it to advance the date, check preparedness tasks, and export a workspace backup.
+8. **Trust:** show sources, account privacy, and data controls. End with what still needs resident validation.
 
-The app is a functional static prototype. Its discovery and planning features work. Shared community posting and live data ingestion are future work. It does not book places, sign users up for volunteer events, confirm access, or calculate live travel times.
+## Honest claims
 
-## Manual verification checklist
+Shared posts, comments, events, RSVPs, account preferences, and service records use a real database. Browser-local preferences also support anonymous use and an offline reminder page. There is no verified resident network, private chat, automatic city submission, paid marketplace, certified service hours, background push notification, or confirmed organizer partnership. Do not imply those capabilities.
 
-- Desktop and narrow screen layouts: readable text, no horizontal overflow, reachable navigation.
-- Search + category + area + saved filters combine correctly; clear filters recovers from empty results.
-- Place dialogs open via cards and map pins; Escape closes them and keyboard focus returns.
-- Saving a place updates its accessible pressed state and survives reload.
-- Adding, removing, reordering, generating, and downloading an itinerary work.
-- A post containing HTML displays as text; filtering, deletion, and reload work.
-- Personal event persists, exports a valid calendar file, and can be removed.
-- Export/import backup round-trip retains data; malformed files are rejected.
-- Links resolve to official sources; dynamic dates are checked with organizers.
+If the hosted audience remains private, the demo requires access granted by the owner. The code repository must be made public with the owner’s explicit approval before using it for a submission requiring public source. See the current event’s rules.
