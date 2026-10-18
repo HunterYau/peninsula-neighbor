@@ -22,3 +22,19 @@ export const messages=sqliteTable('messages',{
   id:text('id').primaryKey(),conversation:text('conversation').notNull().references(()=>conversations.id,{onDelete:'cascade'}),
   author:text('author').notNull().references(()=>profiles.id),body:text('body').notNull(),created:text('created').notNull()
 },t=>[index('messages_conversation_idx').on(t.conversation,t.created)]);
+
+export const discoveries=sqliteTable('discoveries',{
+  id:text('id').primaryKey(),dedupe:text('dedupe').notNull(),source:text('source').notNull(),url:text('url').notNull(),
+  title:text('title').notNull(),body:text('body').notNull(),area:text('area').notNull(),location:text('location').notNull(),
+  starts:text('starts').notNull(),ends:text('ends').notNull(),category:text('category').notNull(),cost:text('cost').notNull().default('Check organizer'),
+  status:text('status').notNull().default('published'),checked:text('checked').notNull(),created:text('created').notNull()
+},t=>[uniqueIndex('discoveries_dedupe_idx').on(t.dedupe),index('discoveries_ends_idx').on(t.ends)]);
+export const discoveryChecks=sqliteTable('discovery_checks',{
+  source:text('source').primaryKey(),attempted:text('attempted').notNull(),succeeded:text('succeeded'),
+  state:text('state').notNull(),note:text('note').notNull(),count:integer('count').notNull().default(0)
+});
+export const sightings=sqliteTable('sightings',{
+  id:text('id').primaryKey(),author:text('author').notNull().references(()=>profiles.id),title:text('title').notNull(),
+  body:text('body').notNull(),area:text('area').notNull(),location:text('location').notNull(),url:text('url').notNull().default(''),
+  created:text('created').notNull(),expires:text('expires').notNull()
+},t=>[index('sightings_expires_idx').on(t.expires)]);

@@ -1,10 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DatabaseSync} from 'node:sqlite';
-import {readFileSync,readdirSync} from 'node:fs';
 import {handleApi,type Database} from '../lib/api.ts';
+import {database} from './database.ts';
 const alice={userId:'alice',fullName:'Alice Local'},bob={userId:'bob',fullName:'Bob Neighbor'};
-function database(){const sqlite=new DatabaseSync(':memory:');sqlite.exec('PRAGMA foreign_keys=ON');for(const migration of readdirSync(new URL('../drizzle/',import.meta.url)).filter(file=>file.endsWith('.sql')).sort())sqlite.exec(readFileSync(new URL(`../drizzle/${migration}`,import.meta.url),'utf8'));const prepare=(sql:string)=>{let params:unknown[]=[];const q={bind(...values:unknown[]){params=values;return q;},async first(){return sqlite.prepare(sql).get(...params as any[])||null;},async all(){return {results:sqlite.prepare(sql).all(...params as any[])};},async run(){return sqlite.prepare(sql).run(...params as any[]);}};return q;};return {db:{prepare,async batch(queries:any[]){sqlite.exec('BEGIN');try{const results=[];for(const query of queries)results.push(await query.run());sqlite.exec('COMMIT');return results;}catch(error){sqlite.exec('ROLLBACK');throw error;}}} as Database,sqlite};}
+
 const request=(path:string,method='GET',data?:unknown,origin='https://local.test')=>new Request(`https://local.test/api/${path}`,{method,headers:{Origin:origin,'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});
 const post={type:'Ask for help',title:'Learning to compost at home',body:'Looking for a neighbor who can share composting basics.',area:'Palos Verdes Estates',topic:'Garden & environment',days:30};
 const event={title:'Community skill sharing',body:'A public learning afternoon for local neighbors.',area:'Palos Verdes Estates',location:'Malaga Cove Library community space',starts:new Date(Date.now()+86400000).toISOString(),ends:new Date(Date.now()+90000000).toISOString(),category:'Community',capacity:1,access:'Contact the organizer about access requirements.'};

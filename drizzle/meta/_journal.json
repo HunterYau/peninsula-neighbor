@@ -15,6 +15,13 @@
       "when": 1792299736776,
       "tag": "0001_flippant_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792300891042,
+      "tag": "0002_lowly_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

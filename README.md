@@ -11,7 +11,7 @@ Peninsula Neighbor brings local discovery, practical services, neighbor-to-neigh
 | Today | Daily overview, live PVE-area weather, NWS weather-alert status, community activity, upcoming events, reminders, and preparedness progress |
 | Community | Publish offers, requests, free exchanges, lost-and-found notes, recommendations, and ideas; topic and area context; server search and pagination; replies; author controls; resolved state; expiry; reporting; complementary help suggestions |
 | Private inbox | Start a conversation from a post; participant-only access; unread tracking; earlier-message pagination; conversation closure; export of loaded messages |
-| Events | Member-created events, categories and time filters, capacity-limited RSVPs, cancellation, personal calendar export, and official organizer calendars |
+| Events | Daily discovered organizer listings, source/freshness labels, date/area/search filters, short-lived neighbor sightings, source coverage; member-created events, capacity-limited RSVPs, and calendar export |
 | Explore | 14 sourced local destinations and businesses; area/category/search/free/saved filters; interactive OpenStreetMap map with approximate listing positions; directions; bookmarks; add-to-plan |
 | Local services | 23 practical resources, searchable by everyday terms such as bus, trash, power, school, study, permits, and senior support |
 | Volunteer | Organizer-linked opportunities, bookmarks, a private service-hours record, and CSV export |
@@ -32,6 +32,7 @@ npm run install:ci
 npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_polite_kate_bishop.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_flippant_northstar.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_lowly_lily_hollister.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 
@@ -52,6 +53,7 @@ npm run build  # Client, server, and Worker artifact
 - **Persistence:** Cloudflare D1; Drizzle schema and generated migrations. Personal data is scoped to the authenticated user on the server.
 - **Identity:** dispatch-owned Sign in with ChatGPT; no custom password handling. Email is never included in public posts or event data.
 - **Local state:** preferences are also stored on-device for convenience and offline reminders. Sign-out clears the local workspace. A new signed-in workspace can preserve anonymous device preferences.
+- **Discovery:** scheduled first-party calendar imports and evidence-checked public announcements; persistent source checks, stale/cancelled states, and expiring neighbor sightings. See [the updater contract](docs/DISCOVERY.md).
 - **Conditions:** server-fetched Open-Meteo and NWS data with bounded timeouts and short caching. The client does not request location permission.
 - **Deployment:** the tracked Sites manifest provisions the `DB` binding. Publish through the Sites workflow; migrations are applied by the hosting platform. This full-stack version cannot be deployed to GitHub Pages as static HTML.
 

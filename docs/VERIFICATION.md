@@ -28,3 +28,12 @@ Work performed October 17–18, 2026. This file is updated as gates finish; it i
 ## Limits to claims
 
 Automated tests exercise actual SQL and API logic, but do not establish resident adoption, visual quality, hardware/mobile compatibility across all browsers, or official organizer endorsement. Local development identity is simulated by the starter and is separate from hosted platform sign-in. No evidence of interviews or measurable community outcomes has been invented.
+
+
+## Daily discovery implementation
+
+- 29 tests and TypeScript passed, including Pacific DST, calendar line folding, exact-time validation, organizer URL restrictions, robots policy, retry deduplication, stable occurrence updates, cancellation/review states, stale-source behavior, and sighting ownership/reporting/expiry.
+- Actual PVLD and RPV public ICS downloads parsed successfully: 366 valid future timed library listings and four recreation listings at setup. All-day or incomplete entries were omitted.
+- Discovery migration applied to local D1 successfully (six commands).
+- Built Worker HTTP checks returned 200 for the application, discovery feed, sightings, and versioned updater instructions. Browser-origin and missing-writer-header update attempts returned 403, malformed event payload returned 400, and an empty unattended update plus persisted readback returned 200.
+- Browser layout QA remains unavailable under the earlier preview approval restriction; no alternate browser access was attempted.

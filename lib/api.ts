@@ -1,5 +1,6 @@
 import {profileSchema,postSchema,commentSchema,eventSchema,preferenceSchema,hourSchema,reportSchema,defaultPreferences,contactSchema,messageSchema,conversationSchema,postStatusSchema,readMessageSchema} from './validation.ts';
 import type {ZodType} from 'zod';
+import {readDiscoveries,sightingSchema} from './discovery.ts';
 export type Identity={userId:string;fullName:string|null};
 export type Database={prepare(sql:string):{bind(...args:unknown[]):any;first():Promise<any>;all():Promise<{results:any[]}>;run():Promise<any>};batch(queries:any[]):Promise<any[]>};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -30,6 +31,13 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
     }
     if(user)await run('INSERT OR IGNORE INTO profiles (id,name,area,bio) VALUES (?,?,?,?)',user.userId,(user.fullName?.split(' ')[0]||'Neighbor').slice(0,40),'Palos Verdes Estates','');
     const uid=user?.userId||'';
+    if(path[0]==='discovery'&&!path[1]&&method==='GET')return json(await readDiscoveries(db));
+    if(path[0]==='sightings'){
+      const id=path[1];
+      if(!id&&method==='GET')return json({sightings:(await all('SELECT s.id,s.title,s.body,s.area,s.location,s.url,s.created,s.expires,u.name,(s.author=?) AS mine FROM sightings s JOIN profiles u ON u.id=s.author WHERE s.expires>? ORDER BY s.created DESC LIMIT 100',uid,now())).map(s=>({...s,mine:!!s.mine}))});
+      if(!id&&method==='POST'){const s=await input(req,sightingSchema),id=crypto.randomUUID();await run('INSERT INTO sightings (id,author,title,body,area,location,url,created,expires) VALUES (?,?,?,?,?,?,?,?,?)',id,uid,s.title,s.body,s.area,s.location,s.url,now(),new Date(Date.now()+(s.hours??4)*3600000).toISOString());return json({id},201);}
+      if(id&&method==='DELETE'){const s=await one('SELECT author FROM sightings WHERE id=?',id);if(!s)throw new HttpError(404,'Sighting not found.');if(s.author!==uid)throw new HttpError(403,'Only the author can end this sighting.');await run('DELETE FROM sightings WHERE id=?',id);return json({ok:true});}
+    }
     if(path[0]==='me'){
       if(!user)return json({profile:null});
       if(method==='GET')return json({profile:await one('SELECT name,area,bio FROM profiles WHERE id=?',uid),workspace:uid});
@@ -131,7 +139,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
       if(path[1]&&method==='DELETE'){await run('DELETE FROM hours WHERE id=? AND user=?',path[1],uid);return json({ok:true});}
     }
     if(path[0]==='reports'&&method==='POST'){
-      const r=await input(req,reportSchema);const table={post:'posts',event:'events',comment:'comments'}[r.kind];if(!await one(`SELECT id FROM ${table} WHERE id=?`,r.target))throw new HttpError(404,'This content no longer exists.');
+      const r=await input(req,reportSchema);const table={post:'posts',event:'events',comment:'comments',sighting:'sightings',discovery:'discoveries'}[r.kind];if(!await one(`SELECT id FROM ${table} WHERE id=?`,r.target))throw new HttpError(404,'This content no longer exists.');
       const existing=await one('SELECT id FROM reports WHERE reporter=? AND target=? AND kind=? AND status=?',uid,r.target,r.kind,'pending');if(!existing)await run('INSERT INTO reports (id,reporter,target,kind,reason,created,status) VALUES (?,?,?,?,?,?,?)',crypto.randomUUID(),uid,r.target,r.kind,r.reason,now(),'pending');return json({ok:true,message:'Report saved for site-owner review. For urgent concerns, contact the appropriate local service.'});
     }
     return json({error:'Not found.'},404);
