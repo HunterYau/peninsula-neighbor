@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./layout.css";
 
 export const metadata: Metadata = {
   title: "Peninsula Neighbor — Your community, connected",

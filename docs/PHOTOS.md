@@ -7,11 +7,13 @@ Four real photographs are bundled in `public/photos/`. The source file pages, or
 | Image | Photographer | License | Used for |
 | --- | --- | --- | --- |
 | Point Vicente Lighthouse on Cliff | Nhostetler | CC BY-SA 3.0 | Home header, Point Vicente area/place previews |
-| Malaga cove | Cardinalngold | Public domain | Explore neighborhood banner |
-| Malaga Cove Library | Sgerbic | Public domain | Library previews and detail |
-| Abalone Cove - D600 Long Exposure | n4rwhals | CC BY-SA 2.0 | Abalone Cove preview and detail |
+| Malaga cove | Cardinalngold | Public domain | Explore neighborhood banner and local guide introductions |
+| Malaga Cove Library | Sgerbic | Public domain | Library previews and detail, new resident and student guide introductions |
+| Abalone Cove - D600 Long Exposure | n4rwhals | CC BY-SA 2.0 | Abalone Cove preview and detail, Volunteer introduction, outdoors guide |
 
 Files are Wikimedia's 1280px resized versions. CSS crops some display frames; other than resizing and display crops, the photographs are unchanged. The sunset image retains its original photographer watermark. Credits and source/license links appear alongside or over each photograph. CC BY-SA photographs retain their respective source licenses; no ownership or endorsement is claimed. The Commons file pages are authoritative attribution references.
+
+Topic banners name the pictured location and provide neighborhood context. They do not depict a current volunteer activity or imply that a listed event takes place at that location. The Today page gives its three featured places larger photo previews; the shared banners stack their image and text on small screens.
 
 ## Event imagery
 
