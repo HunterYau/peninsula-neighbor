@@ -8,4 +8,6 @@ export type Preferences={saved:string[];plan:string[];area:string;prep:string[];
 export type HourEntry={id:string;org:string;date:string;minutes:number;notes:string;organizationId?:string;verification?:string;verificationNote?:string;verifiedAt?:string;verifierName?:string};
 export type Conversation={id:string;title:string;created:string;updated:string;name:string;preview:string;unread:number;closed:boolean;canReopen:boolean};
 export type PrivateMessage={id:string;body:string;created:string;mine:boolean};
-export type Conditions={updated:string;weather:{temperature:number;apparent:number;code:number;wind:number;high:number;low:number;rain:number;sunset:string;days:{date:string;high:number;low:number;code:number;rain:number}[]}|null;alerts:{title:string;severity:string;description:string;url:string;ends:string}[]|null;errors:string[]};
+export type WeatherDay={date:string;high:number|null;low:number|null;description:string;rain:number|null};
+export type Weather={temperature:number;apparent:number|null;wind:number|null;high:number|null;low:number|null;rain:number|null;days:WeatherDay[];description:string;source:'Open-Meteo'|'National Weather Service';sourceUrl:string;validAt:string;stale:boolean};
+export type Conditions={updated:string;weather:Weather|null;alerts:{title:string;severity:string;description:string;url:string;ends:string}[]|null;errors:string[]};

@@ -70,7 +70,7 @@ npm run build  # Client, server, and Worker artifact
 ```text
 app/ui/CommunityApp.tsx       Interface and workflows
 app/api/[...path]/route.ts   Shared community API adapter
-app/api/conditions/route.ts  Cached weather and weather-alert adapter
+app/api/conditions/route.ts  Weather and weather-alert endpoint (browser cache disabled)
 lib/api.ts                  Authorization and data operations
 lib/catalog.ts              Curated local content and provenance links
 lib/tools.ts                Search, planning, calendar, reminder, and matching logic
@@ -98,3 +98,9 @@ The original v1 source is preserved in Git history and the local `base-v1` tag. 
 ## Community workflows
 
 See [COMMUNITY-FEATURES.md](docs/COMMUNITY-FEATURES.md) for the user flows, administrator configuration, approval rules, recommendation behavior, private age/availability settings, organization representation, saved items, and volunteer verification. The Site-owner administrator is configured with the runtime secret `COMMUNITY_ADMIN_EMAIL`; it must match the platform-provided signed-in identity.
+
+### Weather reliability
+
+The Today card uses a PVE-area Open-Meteo forecast, with the free National Weather Service hourly and daily forecasts as a server-side backup. Sources and forecast times are shown in Pacific time. Refresh requests bypass browser caching; the server shares requests and limits upstream refreshes to once per 30 seconds. Healthy responses are cached for five minutes. If both providers fail, a previously loaded forecast is shown only while less than an hour old and is explicitly marked as older data. Unknown values remain blank; an alert feed failure is never displayed as “no alerts.” Weather is an area forecast, not a reading from the visitor’s current location.
+
+Provider references: [Open-Meteo documentation](https://open-meteo.com/en/docs), [NWS API documentation](https://www.weather.gov/documentation/services-web-api).
