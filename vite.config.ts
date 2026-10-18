@@ -71,6 +71,9 @@ export default defineConfig(async ({ command }) => {
           ...localBindingConfig,
           ...(command === "serve"
             ? {
+                // Mirrors the existing local-only Seedy identity. Production
+                // admin access is configured separately in Sites runtime secrets.
+                ...(!managedLinux ? { vars: { COMMUNITY_ADMIN_EMAIL: "seedy@sites.test" } } : {}),
                 services: [
                   {
                     binding: "CONNECTORS",

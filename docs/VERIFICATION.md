@@ -46,3 +46,14 @@ Automated tests exercise actual SQL and API logic, but do not establish resident
 - The private Site's supported service credential retrieved the current `discovery-v1` instructions, exercised the unattended writer without a visitor identity or browser Origin, and read back the saved hosted feed and source checks.
 - Linked cloud task `Automation_690cc59e88f48191b3d9aed4e3c54f3e` was saved enabled for daily 07:00 America/Los_Angeles, starting October 18, 2026. Creation verifies saved scheduling; its first scheduled execution has not yet been observed. The initial import above was run during setup through the same unattended writer.
 - The application remains owner-private. Browser visual inspection is still unverified under the earlier preview approval restriction.
+
+
+## Integrated community workflows
+
+- 39 tests and TypeScript checks pass. Tests retain all previous discussion, inbox, discovery, RSVP, ownership, preference, planner, and export checks and add administrator-only approval, pending-feed privacy, unpublication and withdrawal, organization profiles, private demographic/availability preferences, opt-in rewards, representative-only hour verification, self-verification rejection, verification cascade cleanup, combined search filters, Pacific dates, distance/unknown-coordinate behavior, source deduplication, and saved cancellation handling.
+- Generated append-only migration `0003_parched_bastion.sql` adds five tables and three indexes; applied successfully to local D1 (eight commands).
+- Real local HTTP smoke passed: development sign-in, shared discussion/reply/resolution, administrator-approved event, RSVP/cancellation, and volunteer service record. Disposable records were removed.
+- Additional local HTTP round-trip verified pending submissions are absent from anonymous catalog reads, administrator approval makes a listing visible, organization profiles are produced, member age/interests/availability persist privately, recommendations carry explanations, favorites persist through the existing preferences endpoint, optional badges are enabled only on request, and the representative inbox responds. Its disposable contribution was withdrawn and original member settings restored.
+- Production administrator authorization uses a Sites runtime secret configured from the platform-verified Site owner's email; it is absent from source and client code. Missing configuration fails closed. Local mock administration is only in the portable development configuration.
+- Production build uses the official Sites packaging workflow. No new dependencies or paid APIs were introduced. The existing daily automation is preserved.
+- Browser visual and mobile interaction inspection remains unverified under the earlier preview-navigation approval restriction. No alternate browser surface was used. Responsive CSS and native controls are included, but automated database and HTTP results do not establish visual quality.

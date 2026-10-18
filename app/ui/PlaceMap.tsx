@@ -1,13 +1,13 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import type {Map as LeafletMap} from 'leaflet';
-import type {Place} from '../../lib/catalog';
+type MapPoint={id:string;name:string;lat:number;lng:number};
 import 'leaflet/dist/leaflet.css';
 
-export default function PlaceMap({places,onSelect}:{places:Place[];onSelect:(place:Place)=>void}){
+export default function PlaceMap<T extends MapPoint>({places,onSelect}:{places:T[];onSelect:(place:T)=>void}){
   const container=useRef<HTMLDivElement>(null),callback=useRef(onSelect),[error,setError]=useState('');
   callback.current=onSelect;
-  const key=places.map(p=>p.id).join('|');
+  const key=places.map(p=>`${p.id}:${p.lat}:${p.lng}`).join('|');
   useEffect(()=>{
     let disposed=false,map:LeafletMap|undefined,observer:ResizeObserver|undefined;
     setError('');

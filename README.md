@@ -11,10 +11,12 @@ Peninsula Neighbor brings local discovery, practical services, neighbor-to-neigh
 | Today | Daily overview, live PVE-area weather, NWS weather-alert status, community activity, upcoming events, reminders, and preparedness progress |
 | Community | Publish offers, requests, free exchanges, lost-and-found notes, recommendations, and ideas; topic and area context; server search and pagination; replies; author controls; resolved state; expiry; reporting; complementary help suggestions |
 | Private inbox | Start a conversation from a post; participant-only access; unread tracking; earlier-message pagination; conversation closure; export of loaded messages |
+| Smart search & map | Shared search across events, volunteer roles, businesses, places, and resources; area/distance/date/category/type/age filters; interactive map and directions |
+| Community contributions | Private submission queue, administrator approval, withdrawal, organization pages, representative affiliation review, optional private badges, activity history, and explained recommendations |
 | Events | Daily discovered organizer listings, source/freshness labels, date/area/search filters, short-lived neighbor sightings, source coverage; member-created events, capacity-limited RSVPs, and calendar export |
 | Explore | 14 sourced local destinations and businesses; area/category/search/free/saved filters; interactive OpenStreetMap map with approximate listing positions; directions; bookmarks; add-to-plan |
 | Local services | 23 practical resources, searchable by everyday terms such as bus, trash, power, school, study, permits, and senior support |
-| Volunteer | Organizer-linked opportunities, bookmarks, a private service-hours record, and CSV export |
+| Volunteer | Organizer-linked opportunities, bookmarks, a private service-hours record, organization associations, representative-confirmed hours, separate verified totals, and CSV export |
 | Be prepared | Personal checklist, direct official guidance, weather outlook, NWS alerts with explicit feed-failure states, and printable text export |
 | Local guides | New resident, family, student, outdoors, and support guides with relevant services and places |
 | My planner | Day suggestions constrained by time, area, interests, free visits, and travel mode; distance-aware transfers; reordering; itinerary export; one-time and recurring reminders; calendar export |
@@ -33,10 +35,11 @@ npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_polite_kate_bishop.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_flippant_northstar.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_lowly_lily_hollister.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_parched_bastion.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 
-Open the printed local URL, normally `http://127.0.0.1:5173/`. The portable starter supplies a **development-only** sign-in route at `/signin-with-chatgpt?return_to=/`. It uses a simulated identity for local development; hosted sign-in is handled by the Sites platform. Never expose the dev server publicly.
+Open the printed local URL, normally `http://127.0.0.1:5173/`. The portable starter supplies a **development-only** sign-in route at `/signin-with-chatgpt?return_to=/`. It uses a simulated identity with local-only review access for local development; hosted sign-in is handled by the Sites platform. Never expose the dev server publicly.
 
 Apply each SQL migration once, in order. Local database state lives in ignored `.wrangler/state/`. A production preview can be started with `npm start` after building and migrating.
 
@@ -84,3 +87,7 @@ The app does not verify residency, certify volunteer hours, reserve outside venu
 The private hosted audience and private GitHub repository remain private unless their owner explicitly approves a change. For submission, review the current hackathon requirements, including its public-repository requirement. Do not claim interviews, resident adoption, or outcomes that have not occurred.
 
 The original v1 source is preserved in Git history and the local `base-v1` tag. This project was created with AI assistance; disclose tools in the submission as required. All product code is inspectable. Local facts and primary sources are documented in [SOURCES.md](docs/SOURCES.md).
+
+## Community workflows
+
+See [COMMUNITY-FEATURES.md](docs/COMMUNITY-FEATURES.md) for the user flows, administrator configuration, approval rules, recommendation behavior, private age/availability settings, organization representation, saved items, and volunteer verification. The Site-owner administrator is configured with the runtime secret `COMMUNITY_ADMIN_EMAIL`; it must match the platform-provided signed-in identity.

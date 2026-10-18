@@ -13,6 +13,7 @@ try{
   const replies=await call(`posts/${post.id}/comments`);assert.equal(replies.comments.length,1);
   await call(`posts/${post.id}`,'PATCH',{status:'resolved'});
   const event=await call('events','POST',{title:'QA test — disposable event',body:'This is a local automated verification event and will be removed.',area:'Palos Verdes Estates',location:'Public library — verification only',starts:new Date(Date.now()+86400000).toISOString(),ends:new Date(Date.now()+90000000).toISOString(),category:'Community',capacity:1});created.push(['events',event.id]);
+  await call(`admin/events/${event.id}`,'PATCH',{status:'approved',note:'Local disposable QA approval.'});
   await call(`events/${event.id}/rsvp`,'POST');
   const events=await call('events');assert.equal(events.events.find(e=>e.id===event.id)?.joined,true);
   await call(`events/${event.id}/rsvp`,'DELETE');

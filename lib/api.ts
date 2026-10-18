@@ -1,7 +1,8 @@
 import {profileSchema,postSchema,commentSchema,eventSchema,preferenceSchema,hourSchema,reportSchema,defaultPreferences,contactSchema,messageSchema,conversationSchema,postStatusSchema,readMessageSchema} from './validation.ts';
 import type {ZodType} from 'zod';
 import {readDiscoveries,sightingSchema} from './discovery.ts';
-export type Identity={userId:string;fullName:string|null};
+import {communityApi,CommunityError} from './community-api.ts';
+export type Identity={userId:string;fullName:string|null;email?:string};
 export type Database={prepare(sql:string):{bind(...args:unknown[]):any;first():Promise<any>;all():Promise<{results:any[]}>;run():Promise<any>};batch(queries:any[]):Promise<any[]>};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 class HttpError extends Error{status:number;constructor(status:number,message:string){super(message);this.status=status;}}
@@ -11,7 +12,7 @@ async function input<T>(req:Request,schema:ZodType<T>):Promise<T>{
   let parsed;try{parsed=JSON.parse(body);}catch{throw new HttpError(400,'Invalid JSON.');}
   const result=schema.safeParse(parsed);if(!result.success)throw new HttpError(400,result.error.issues.map(i=>`${i.path.join('.')||'Form'}: ${i.message}`).join(' '));return result.data;
 }
-export async function handleApi(req:Request,db:Database,user:Identity|null):Promise<Response>{
+export async function handleApi(req:Request,db:Database,user:Identity|null,config:{adminEmail?:string}={}):Promise<Response>{
   const url=new URL(req.url), path=url.pathname.replace(/^\/api\/?/,'').split('/').filter(Boolean),method=req.method;
   const stmt=(sql:string,...values:unknown[])=>db.prepare(sql).bind(...values);
   const one=(sql:string,...values:unknown[])=>stmt(sql,...values).first();
@@ -31,16 +32,18 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
     }
     if(user)await run('INSERT OR IGNORE INTO profiles (id,name,area,bio) VALUES (?,?,?,?)',user.userId,(user.fullName?.split(' ')[0]||'Neighbor').slice(0,40),'Palos Verdes Estates','');
     const uid=user?.userId||'';
+    const admin=!!user?.email&&!!config.adminEmail&&user.email.toLowerCase()===config.adminEmail.toLowerCase();
+    const communityResponse=await communityApi(req,db,user,path,admin);if(communityResponse)return communityResponse;
     if(path[0]==='discovery'&&!path[1]&&method==='GET')return json(await readDiscoveries(db));
     if(path[0]==='sightings'){
       const id=path[1];
-      if(!id&&method==='GET')return json({sightings:(await all('SELECT s.id,s.title,s.body,s.area,s.location,s.url,s.created,s.expires,u.name,(s.author=?) AS mine FROM sightings s JOIN profiles u ON u.id=s.author WHERE s.expires>? ORDER BY s.created DESC LIMIT 100',uid,now())).map(s=>({...s,mine:!!s.mine}))});
-      if(!id&&method==='POST'){const s=await input(req,sightingSchema),id=crypto.randomUUID();await run('INSERT INTO sightings (id,author,title,body,area,location,url,created,expires) VALUES (?,?,?,?,?,?,?,?,?)',id,uid,s.title,s.body,s.area,s.location,s.url,now(),new Date(Date.now()+(s.hours??4)*3600000).toISOString());return json({id},201);}
+      if(!id&&method==='GET')return json({sightings:(await all("SELECT s.id,s.title,s.body,s.area,s.location,s.url,s.created,s.expires,u.name,r.status AS review,(s.author=?) AS mine FROM sightings s JOIN profiles u ON u.id=s.author LEFT JOIN content_reviews r ON r.id=s.id AND r.kind='sighting' WHERE s.expires>? AND (r.id IS NULL OR r.status='approved' OR s.author=?) ORDER BY s.created DESC LIMIT 100",uid,now(),uid)).map(s=>({...s,mine:!!s.mine}))});
+      if(!id&&method==='POST'){const s=await input(req,sightingSchema),id=crypto.randomUUID();await db.batch([stmt('INSERT INTO sightings (id,author,title,body,area,location,url,created,expires) VALUES (?,?,?,?,?,?,?,?,?)',id,uid,s.title,s.body,s.area,s.location,s.url,now(),new Date(Date.now()+(s.hours??4)*3600000).toISOString()),stmt("INSERT INTO content_reviews (id,kind,status) VALUES (?,'sighting','pending')",id)]);return json({id,status:'pending'},201);}
       if(id&&method==='DELETE'){const s=await one('SELECT author FROM sightings WHERE id=?',id);if(!s)throw new HttpError(404,'Sighting not found.');if(s.author!==uid)throw new HttpError(403,'Only the author can end this sighting.');await run('DELETE FROM sightings WHERE id=?',id);return json({ok:true});}
     }
     if(path[0]==='me'){
       if(!user)return json({profile:null});
-      if(method==='GET')return json({profile:await one('SELECT name,area,bio FROM profiles WHERE id=?',uid),workspace:uid});
+      if(method==='GET')return json({profile:await one('SELECT name,area,bio FROM profiles WHERE id=?',uid),workspace:uid,admin});
       if(method==='PUT'){const p=await input(req,profileSchema);await run('UPDATE profiles SET name=?,area=?,bio=? WHERE id=?',p.name,p.area,p.bio,uid);return json({profile:p});}
     }
     if(path[0]==='preferences'){
@@ -72,15 +75,15 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
     }
     if(path[0]==='events'){
       const id=path[1];
-      if(!id&&method==='GET')return json({events:(await all(`SELECT e.id,e.title,e.body,e.area,e.location,e.starts,e.ends,e.category,e.access,e.capacity,e.created,u.name,(e.author=?) AS mine,(SELECT COUNT(*) FROM rsvps r WHERE r.event=e.id) AS attending,EXISTS(SELECT 1 FROM rsvps r WHERE r.event=e.id AND r.user=?) AS joined FROM events e JOIN profiles u ON u.id=e.author WHERE e.ends>? ORDER BY e.starts LIMIT 200`,uid,uid,now())).map(e=>({...e,mine:!!e.mine,joined:!!e.joined}))});
+      if(method==='GET'&&!path[2])return json({events:(await all(`SELECT e.id,e.title,e.body,e.area,e.location,e.starts,e.ends,e.category,e.access,e.capacity,e.created,u.name,r.status AS review,(e.author=?) AS mine,(SELECT COUNT(*) FROM rsvps r WHERE r.event=e.id) AS attending,EXISTS(SELECT 1 FROM rsvps r WHERE r.event=e.id AND r.user=?) AS joined FROM events e JOIN profiles u ON u.id=e.author LEFT JOIN content_reviews r ON r.id=e.id AND r.kind='event' WHERE e.ends>? AND (r.id IS NULL OR r.status='approved' OR e.author=?) AND (?='' OR e.id=?) ORDER BY e.starts LIMIT 200`,uid,uid,now(),uid,id||'',id||'')).map(e=>({...e,mine:!!e.mine,joined:!!e.joined}))});
       if(!id&&method==='POST'){
-        const e=await input(req,eventSchema);if(new Date(e.starts).valueOf()<Date.now()-60000)throw new HttpError(400,'Choose a future start time.');if(new Date(e.starts).valueOf()>Date.now()+366*86400000)throw new HttpError(400,'Choose a date within the next year.');const id=crypto.randomUUID();await run('INSERT INTO events (id,author,title,body,area,location,starts,ends,category,access,capacity,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',id,uid,e.title,e.body,e.area,e.location,e.starts,e.ends,e.category,e.access,e.capacity,now());return json({id},201);
+        const e=await input(req,eventSchema);if(new Date(e.starts).valueOf()<Date.now()-60000)throw new HttpError(400,'Choose a future start time.');if(new Date(e.starts).valueOf()>Date.now()+366*86400000)throw new HttpError(400,'Choose a date within the next year.');const id=crypto.randomUUID();await db.batch([stmt('INSERT INTO events (id,author,title,body,area,location,starts,ends,category,access,capacity,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',id,uid,e.title,e.body,e.area,e.location,e.starts,e.ends,e.category,e.access,e.capacity,now()),stmt("INSERT INTO content_reviews (id,kind,status) VALUES (?,'event','pending')",id)]);return json({id,status:'pending'},201);
       }
       if(id&&path[2]==='rsvp'&&['POST','DELETE'].includes(method)){
-        const entry=await one('SELECT id,capacity,ends FROM events WHERE id=?',id);if(!entry)throw new HttpError(404,'This event was removed.');if(entry.ends<now())throw new HttpError(409,'This event has ended.');
+        const entry=await one('SELECT id,capacity,ends FROM events WHERE id=?',id);if(method==='POST'&&(await one("SELECT status FROM content_reviews WHERE id=? AND kind='event'",id))?.status&&!await one("SELECT id FROM content_reviews WHERE id=? AND kind='event' AND status='approved'",id))throw new HttpError(409,'This event is awaiting administrator approval.');if(!entry)throw new HttpError(404,'This event was removed.');if(entry.ends<now())throw new HttpError(409,'This event has ended.');
         if(method==='DELETE'){await run('DELETE FROM rsvps WHERE event=? AND user=?',id,uid);return json({ok:true});}
         // Capacity check and insert are one SQL statement: simultaneous RSVPs cannot overbook.
-        await run('INSERT OR IGNORE INTO rsvps (event,user,created) SELECT ?,?,? WHERE ?=0 OR (SELECT COUNT(*) FROM rsvps WHERE event=?)<?',id,uid,now(),entry.capacity,id,entry.capacity);
+        await run("INSERT OR IGNORE INTO rsvps (event,user,created) SELECT ?,?,? WHERE (?=0 OR (SELECT COUNT(*) FROM rsvps WHERE event=?)<?) AND NOT EXISTS(SELECT 1 FROM content_reviews WHERE id=? AND kind='event' AND status<>'approved')",id,uid,now(),entry.capacity,id,entry.capacity,id);
         if(!await one('SELECT event FROM rsvps WHERE event=? AND user=?',id,uid))throw new HttpError(409,'This event has reached capacity.');return json({ok:true});
       }
       if(id&&method==='DELETE'){const entry=await one('SELECT author FROM events WHERE id=?',id);if(!entry)throw new HttpError(404,'Event not found.');if(entry.author!==uid)throw new HttpError(403,'Only the organizer can remove this event.');await run('DELETE FROM events WHERE id=?',id);return json({ok:true});}
@@ -134,7 +137,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
     }
     if(path[0]==='hours'){
       if(!user)throw new HttpError(401,'Sign in to keep your service record.');
-      if(method==='GET')return json({hours:await all('SELECT id,org,date,minutes,notes FROM hours WHERE user=? ORDER BY date DESC LIMIT 500',uid)});
+      if(method==='GET')return json({hours:await all("SELECT h.id,h.org,h.date,h.minutes,h.notes,v.organization AS organizationId,COALESCE(v.status,'self-reported') AS verification,v.note AS verificationNote,v.verified AS verifiedAt,p.name AS verifierName FROM hours h LEFT JOIN hour_verifications v ON v.hour=h.id LEFT JOIN profiles p ON p.id=v.verifier WHERE h.user=? ORDER BY h.date DESC LIMIT 500",uid)});
       if(method==='POST'){const h=await input(req,hourSchema);if(h.date>now().slice(0,10))throw new HttpError(400,'Log completed service, not future hours.');const id=crypto.randomUUID();await run('INSERT INTO hours (id,user,org,date,minutes,notes) VALUES (?,?,?,?,?,?)',id,uid,h.org,h.date,h.minutes,h.notes);return json({id},201);}
       if(path[1]&&method==='DELETE'){await run('DELETE FROM hours WHERE id=? AND user=?',path[1],uid);return json({ok:true});}
     }
@@ -143,5 +146,5 @@ export async function handleApi(req:Request,db:Database,user:Identity|null):Prom
       const existing=await one('SELECT id FROM reports WHERE reporter=? AND target=? AND kind=? AND status=?',uid,r.target,r.kind,'pending');if(!existing)await run('INSERT INTO reports (id,reporter,target,kind,reason,created,status) VALUES (?,?,?,?,?,?,?)',crypto.randomUUID(),uid,r.target,r.kind,r.reason,now(),'pending');return json({ok:true,message:'Report saved for site-owner review. For urgent concerns, contact the appropriate local service.'});
     }
     return json({error:'Not found.'},404);
-  }catch(error){if(error instanceof HttpError)return json({error:error.message},error.status);console.error('Community API failed:',error instanceof Error?error.message:'Unknown error');return json({error:'The service could not complete this request. Please try again.'},500);}
+  }catch(error){if(error instanceof HttpError||error instanceof CommunityError)return json({error:error.message},error.status);console.error('Community API failed:',error instanceof Error?error.message:'Unknown error');return json({error:'The service could not complete this request. Please try again.'},500);}
 }

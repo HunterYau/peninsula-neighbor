@@ -48,7 +48,7 @@ test('neighbor sightings require membership, protect ownership, expire, and can 
   assert.equal((await handleApi(req('sightings','POST',{...sighting,hours:25}),db,alice)).status,400);
   assert.equal((await handleApi(req('sightings','POST',{...sighting,url:'javascript:alert(1)'}),db,alice)).status,400);
   const {id}=await(await handleApi(req('sightings','POST',sighting),db,alice)).json() as any;
-  const feed=await(await handleApi(req('sightings'),db,bob)).json() as any;assert.equal(feed.sightings[0].mine,false);assert.equal('author' in feed.sightings[0],false);
+  sqlite.prepare("UPDATE content_reviews SET status='approved' WHERE id=?").run(id);const feed=await(await handleApi(req('sightings'),db,bob)).json() as any;assert.equal(feed.sightings[0].mine,false);assert.equal('author' in feed.sightings[0],false);
   assert.equal((await handleApi(req('reports','POST',{target:id,kind:'sighting',reason:'This stand has closed.'}),db,bob)).status,200);
   assert.equal((await handleApi(req(`sightings/${id}`,'DELETE'),db,bob)).status,403);
   sqlite.prepare('UPDATE sightings SET expires=? WHERE id=?').run('2000-01-01T00:00:00.000Z',id);
