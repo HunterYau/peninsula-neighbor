@@ -15,11 +15,14 @@ Work performed October 17–18, 2026. This file is updated as gates finish; it i
 - Real HTTP smoke test passed through development sign-in, post/reply/resolution, event creation, RSVP/cancellation, and private service-record operations. All disposable records were removed.
 - Secondary text colors used in the readability pass were checked numerically: `#63757d` on white has a contrast ratio of approximately 4.8:1.
 
+- Owner-private deployment succeeded at https://peninsula-neighbor.hunteryau.chatgpt.site, version `appgver_f7f0c05c35d48191a83fc3728088510a`, from source commit `e2fadd92010965cc3dcc6177fcc0dfb332e84852`. Native database inspection confirmed all nine application tables in the hosted `DB` binding.
+- The same source commit is pushed to the existing private GitHub repository. The local and `origin/main` hashes matched after GitHub Desktop completed the push.
+
 ## Pending verification
 
 - Browser layout and interaction inspection: automatic approval review rejected preview navigation after the old file URL was blocked. Explicit approval for the new HTTP development URL has been requested; no alternate browser surface was used.
 - Mobile layouts, keyboard paths, and full UI form/export round-trips still require the browser pass.
-- Hosted deployment and current GitHub commit state will be recorded after publication.
+
 
 ## Limits to claims
 
