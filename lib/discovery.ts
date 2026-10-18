@@ -56,7 +56,9 @@ export function robotsAllows(body:string,path:string){
   return !rules.length||rules[0].allow;
 }
 async function boundedFetch(url:string){
-  const response=await fetch(url,{redirect:'error',headers:{'User-Agent':'PeninsulaNeighbor/2.1 (+https://peninsula-neighbor.hunteryau.chatgpt.site)'},signal:AbortSignal.timeout(15000)});
+  // Workers does not implement redirect:error. Manual + non-2xx rejection keeps
+  // every request on its fixed approved host without following Location.
+  const response=await fetch(url,{redirect:'manual',headers:{'User-Agent':'PeninsulaNeighbor/2.1 (+https://peninsula-neighbor.hunteryau.chatgpt.site)'},signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new Error(`Source returned ${response.status}`);
   const reader=response.body?.getReader();if(!reader)throw new Error('Empty source response');let size=0,result='';const decoder=new TextDecoder();
   try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>2_000_000)throw new Error('Source exceeds download limit');result+=decoder.decode(value,{stream:true});}return result+decoder.decode();}finally{await reader.cancel();}

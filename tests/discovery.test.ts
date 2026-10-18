@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {calendarTime,parseCalendar,robotsAllows,discoveryUpdateSchema,saveDiscoveryUpdate,readDiscoveries,eventKey} from '../lib/discovery.ts';
+import {calendarTime,parseCalendar,robotsAllows,discoveryUpdateSchema,saveDiscoveryUpdate,readDiscoveries,eventKey,crawlCalendars} from '../lib/discovery.ts';
 import {evidenceUrl} from '../lib/discovery-sources.ts';
 import {handleApi} from '../lib/api.ts';
 import {database} from './database.ts';
@@ -61,4 +61,11 @@ test('stable calendar occurrence IDs update a rescheduled or renamed event witho
   await saveDiscoveryUpdate(db,discoveryUpdateSchema.parse({events:[{...event,occurrence:'17400324|',title:'Rescheduled library pop-up',starts:'2026-10-24T18:00:00.000Z',ends:'2026-10-24T20:00:00.000Z'}]}),now);
   assert.equal((sqlite.prepare('SELECT COUNT(*) AS n FROM discoveries').get() as any).n,1);
   assert.equal((await readDiscoveries(db,now)).events[0].title,'Rescheduled library pop-up');
+});
+test('crawler uses Workers-compatible manual redirects, checks robots, and does not follow redirects or accept HTML as a calendar',async()=>{
+  const realFetch=globalThis.fetch,calls:string[]=[];
+  try{
+    globalThis.fetch=async(input,init)=>{assert.equal(init?.redirect,'manual');const url=String(input);calls.push(url);if(url.endsWith('/robots.txt'))return new Response('User-agent: *\nDisallow: /private');if(url.includes('catID=23'))return new Response(null,{status:302,headers:{Location:'https://evil.test/feed'}});if(url.includes('catID=28'))return new Response('<html>Temporarily unavailable</html>');return new Response('BEGIN:VCALENDAR\nEND:VCALENDAR');};
+    const result=await crawlCalendars();assert.equal(result.checks.find(c=>c.source==='rpv-recreation')?.state,'unavailable');assert.equal(result.checks.find(c=>c.source==='rpv-community')?.state,'unavailable');assert.equal(result.checks.find(c=>c.source==='pvld')?.state,'ok');assert.equal(calls.filter(u=>u==='https://www.rpvca.gov/robots.txt').length,1);assert.equal(calls.some(u=>u.includes('evil.test')),false);
+  }finally{globalThis.fetch=realFetch;}
 });
