@@ -12,7 +12,12 @@ export function extractEventPhoto(html:string,event:{url:string;title:string;sou
  for(const script of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)){try{visit(JSON.parse(script[1]));}catch{}}
  if(meta['og:image'])candidates.push(meta['og:image']);if(meta['twitter:image'])candidates.push(meta['twitter:image']);
  const source=discoverySources.find(s=>s.id===event.source);if(!source)return null;
- for(const candidate of candidates){let src;try{src=new URL(candidate,event.url).href;}catch{continue;}if(!publicImageLink(src)||/(?:logo|favicon|placeholder|default[-_]?image|social[-_]?share|apple-touch-icon)/i.test(src))continue;
+ for(const candidate of candidates){if(!candidate.trim())continue;let src;try{src=new URL(candidate,event.url).href;}catch{continue;}
+  const imageUrl=new URL(src),pageUrl=new URL(event.url);
+  // Some calendar systems emit image:"" or use the event page as og:image.
+  // Resolving that value would otherwise turn HTML into a broken image request.
+  if(imageUrl.origin===pageUrl.origin&&imageUrl.pathname===pageUrl.pathname)continue;
+  if(!publicImageLink(src)||/(?:logo|favicon|placeholder|default[-_]?image|social[-_]?share|apple-touch-icon)/i.test(src))continue;
   const parsed=photoSchema.safeParse({src,alt:(meta['og:image:alt']||`Organizer image for ${event.title}`).slice(0,240),credit:`${source.name} · organizer image`.slice(0,200),source:event.url});if(parsed.success)return parsed.data;
  }
  return null;

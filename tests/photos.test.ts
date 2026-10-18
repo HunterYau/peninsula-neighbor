@@ -21,6 +21,8 @@ test('metadata extraction accepts event artwork but excludes organization logos 
  assert.equal(extractEventPhoto('<meta property="og:image" content="https://example.com/logo.png">',event),null);
  assert.equal(extractEventPhoto(`<meta property="og:image" content="${photo.src}">`,{...event,url:'https://evil.test/event/1'}),null);
  assert.equal(extractEventPhoto('<meta property="og:image" content="http://127.0.0.1/a.jpg">',event),null);
+ assert.equal(extractEventPhoto('<script type="application/ld+json">{"@type":"Event","image":""}</script>',event),null);
+ assert.equal(extractEventPhoto(`<meta property="og:image" content="${event.url}">`,event),null);
 });
 test('photo upserts persist, survive later image-free calendar imports, and can be explicitly removed',async()=>{
  const {db}=database();await saveDiscoveryUpdate(db,discoveryUpdateSchema.parse({events:[{...entry,photo}]}),now);
