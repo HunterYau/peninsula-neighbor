@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {hoursStatus,mapListings,estimateMinutes,directionsUrl,withinBounds,type MapFilter} from '../lib/map-browser.ts';
+import {hoursStatus,mapListings,directionsUrl,googleMapsAreaUrl,withinBounds,type MapFilter} from '../lib/map-browser.ts';
 import type {Listing} from '../lib/community-model.ts';
 const now=new Date('2026-10-19T18:00:00Z');
 const base:Listing={id:'malaga-library',kind:'place',title:'Malaga Cove Library',body:'A quiet library for books and study.',area:'Palos Verdes Estates',category:'Learning',location:'2400 Via Campesina',organization:'pvld.org',url:'https://www.pvld.org/locations',contact:'',minimumAge:null,maximumAge:null,eligibility:'Ask about access.',starts:null,ends:null,deadline:null,lat:33.8,lng:-118.39,approximate:true,verification:'Official source directory',verified:'2026-10-18',status:'published'};
@@ -35,10 +35,11 @@ test('open filtering excludes unknown hours and event schedules; expired and can
  assert.deepEqual(mapListings([base,event,{...base,id:'unknown'}],{...options,openOnly:true},now).map(i=>i.id),[base.id]);
  assert.equal(mapListings([{...event,status:'cancelled'},{...event,id:'expired',ends:'2026-10-18T19:00:00Z'}],options,now).length,0);
 });
-test('directions link uses the public destination and travel mode; estimates clearly differ by mode',()=>{
+test('directions link uses the public destination and travel mode, and an optional explicitly supplied starting point',()=>{
  const url=new URL(directionsUrl(base,'walk'));assert.equal(url.searchParams.get('travelmode'),'walking');assert.equal(url.searchParams.has('origin'),false);assert.match(url.searchParams.get('destination')!,/2400 Via Campesina/);
  const unknownAddress={...base,location:base.area};assert.equal(new URL(directionsUrl(unknownAddress,'drive')).searchParams.get('destination'),'33.8,-118.39');
- assert.ok(estimateMinutes(2,'walk')>estimateMinutes(2,'drive'));assert.ok(estimateMinutes(0,'drive')>=0);
+ const withOrigin=new URL(directionsUrl(base,'drive',{lat:33.787,lng:-118.402}));assert.equal(withOrigin.searchParams.get('origin'),'33.787000,-118.402000');assert.equal(withOrigin.searchParams.get('travelmode'),'driving');
+ const area=new URL(googleMapsAreaUrl({lat:33.787,lng:-118.402}));assert.equal(area.searchParams.get('map_action'),'map');assert.equal(area.searchParams.get('center'),'33.787000,-118.402000');
  assert.equal(new URL(directionsUrl({...base,kind:'event',title:'A temporary workshop'},'drive')).searchParams.get('destination'),'2400 Via Campesina, Palos Verdes Estates');
 });
 test('map search recognizes everyday coffee, library, and coastal walking terms',()=>{
