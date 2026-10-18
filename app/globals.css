@@ -26,3 +26,6 @@
 @media(max-width:480px){.photo-welcome .welcome-copy h2{font-size:30px}.photo-welcome .welcome-copy{padding:29px 23px 83px}.photo-welcome:after{background:linear-gradient(90deg,rgba(9,35,34,.9),rgba(9,35,34,.44))}.photo-welcome .welcome-copy p{font-size:13px;max-width:270px}.photo-welcome .photo-credit{font-size:8px}.hero-place-label{font-size:9px;left:23px;bottom:43px}.photo-welcome{min-height:360px}.mini-place .photo-credit{font-size:9px}.event-detail-photo{max-height:290px}.event-row-with-photo .date-block{align-self:flex-start;margin-top:5px}.core-listing .photo-credit{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.photo-frame>img{transition:none}}
 .photo-welcome .welcome-photo{isolation:auto}
+@media(max-width:480px){.mini-place{display:grid;grid-template-columns:70px minmax(0,1fr);gap:5px 13px}.mini-place-art{grid-row:1/3}.mini-place-art>.photo-frame{display:block}.mini-place>div{grid-column:2;grid-row:1;min-width:0}.mini-place>.photo-credit{grid-column:2;grid-row:2;margin:0;padding:0}}
+.modal{margin:auto}
+@media(max-width:360px){.app-topbar{gap:10px}.breadcrumb{min-width:0}.breadcrumb-location,.breadcrumb>svg{display:none}.breadcrumb strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar-actions{flex-shrink:0}}
