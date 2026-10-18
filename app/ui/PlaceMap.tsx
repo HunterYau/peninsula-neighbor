@@ -1,31 +1,17 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-import type {Map as LeafletMap} from 'leaflet';
-type MapPoint={id:string;name:string;lat:number;lng:number};
+import type {Map as LeafletMap,LayerGroup,Marker} from 'leaflet';
+import type {MapBounds,Position} from '../../lib/map-browser';
 import 'leaflet/dist/leaflet.css';
-
-export default function PlaceMap<T extends MapPoint>({places,onSelect}:{places:T[];onSelect:(place:T)=>void}){
-  const container=useRef<HTMLDivElement>(null),callback=useRef(onSelect),[error,setError]=useState('');
-  callback.current=onSelect;
-  const key=places.map(p=>`${p.id}:${p.lat}:${p.lng}`).join('|');
-  useEffect(()=>{
-    let disposed=false,map:LeafletMap|undefined,observer:ResizeObserver|undefined;
-    setError('');
-    import('leaflet').then(L=>{
-      if(disposed||!container.current)return;
-      const motion=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      map=L.map(container.current,{scrollWheelZoom:false,minZoom:10,maxZoom:18,zoomAnimation:motion,fadeAnimation:motion,markerZoomAnimation:motion});
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',maxZoom:19}).on('tileerror',()=>setError('Map tiles are unavailable. You can still use the place list.')).addTo(map);
-      places.forEach((place,index)=>{
-        const marker=L.marker([place.lat,place.lng],{title:place.name,keyboard:true,icon:L.divIcon({className:'numbered-marker',html:`<span>${index+1}</span>`,iconSize:[28,28],iconAnchor:[14,14]})}).addTo(map!);
-        marker.on('click',()=>callback.current(place));
-        marker.getElement()?.setAttribute('aria-label',`${index+1}. ${place.name}`);
-      });
-      if(places.length>1)map.fitBounds(L.latLngBounds(places.map(p=>[p.lat,p.lng] as [number,number])),{padding:[35,35],maxZoom:14});
-      else map.setView([places[0]?.lat||33.77,places[0]?.lng||-118.39],14);
-      observer=new ResizeObserver(()=>map?.invalidateSize());observer.observe(container.current);
-    }).catch(()=>setError('The interactive map could not be loaded. Please use the place list.'));
-    return()=>{disposed=true;observer?.disconnect();map?.remove();};
-  },[key]);
-  return <div className="local-map live-map"><div ref={container} className="leaflet-host" aria-label="Interactive map of local places"/>{error&&<div className="map-error" role="status">{error}</div>}<div className="map-disclaimer">Approximate listing locations · Check access before visiting</div></div>;
+type MapPoint={id:string;name:string;lat:number;lng:number;kind?:string};
+type Props<T>={places:T[];onSelect:(place:T)=>void;selectedId?:string;fitKey?:string|number;onBounds?:(bounds:MapBounds)=>void;origin?:Position;className?:string};
+export default function PlaceMap<T extends MapPoint>({places,onSelect,selectedId,fitKey,onBounds,origin,className=''}:Props<T>){
+ const leaflet=useRef<typeof import('leaflet')|null>(null),container=useRef<HTMLDivElement>(null),map=useRef<LeafletMap|null>(null),layer=useRef<LayerGroup|null>(null),originLayer=useRef<LayerGroup|null>(null),markers=useRef(new Map<string,Marker>()),latest=useRef({places,onSelect,onBounds}),[ready,setReady]=useState(false),[error,setError]=useState('');
+ latest.current={places,onSelect,onBounds};const positions=places.map(p=>`${p.id}:${p.lat}:${p.lng}:${p.name}`).join('|');
+ useEffect(()=>{let disposed=false,observer:ResizeObserver|undefined;import('leaflet').then(L=>{if(disposed||!container.current)return;const motion=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;leaflet.current=L;const m=L.map(container.current,{scrollWheelZoom:false,minZoom:9,maxZoom:18,zoomAnimation:motion,fadeAnimation:motion,markerZoomAnimation:motion});map.current=m;L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',maxZoom:19}).on('tileerror',()=>setError('Some map tiles are unavailable. The results list and directions still work.')).addTo(m);layer.current=L.layerGroup().addTo(m);originLayer.current=L.layerGroup().addTo(m);m.setView([33.775,-118.385],12);m.on('moveend',()=>{const b=m.getBounds();latest.current.onBounds?.({north:b.getNorth(),south:b.getSouth(),east:b.getEast(),west:b.getWest()});});observer=new ResizeObserver(()=>m.invalidateSize({pan:false}));observer.observe(container.current);setReady(true);}).catch(()=>setError('The interactive map could not load. Please use the results list.'));return()=>{disposed=true;observer?.disconnect();map.current?.remove();map.current=null;layer.current=null;originLayer.current=null;};},[]);
+ useEffect(()=>{const L=leaflet.current;if(!ready||!L||!map.current||!layer.current)return;layer.current.clearLayers();markers.current.clear();const groups=new Map<string,T[]>();latest.current.places.forEach(p=>{const key=`${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;groups.set(key,[...(groups.get(key)||[]),p]);});for(const group of groups.values()){const p=group[0],number=latest.current.places.findIndex(i=>i.id===p.id)+1;const marker=L.marker([p.lat,p.lng],{title:group.length>1?`${p.name} and ${group.length-1} more at this location`:p.name,keyboard:true,icon:L.divIcon({className:`numbered-marker browse-marker kind-${['business','event','volunteer'].includes(p.kind||'')?p.kind:'place'}`,html:`<span>${number}</span>${group.length>1?`<b>${group.length}</b>`:''}`,iconSize:[34,34],iconAnchor:[17,17]})}).addTo(layer.current);marker.on('click',()=>{const current=latest.current.places.find(i=>i.id===p.id);if(current)latest.current.onSelect(current);});marker.getElement()?.setAttribute('aria-label',group.length>1?`${group.length} listings at ${p.name}`:`${number}. ${p.name}`);group.forEach(i=>markers.current.set(i.id,marker));}},[ready,positions]);
+ useEffect(()=>{if(!ready||!map.current)return;const p=latest.current.places.find(p=>p.id===selectedId);const selectedMarker=selectedId?markers.current.get(selectedId):null;for(const marker of new Set(markers.current.values())){marker.getElement()?.classList.toggle('is-selected',marker===selectedMarker);marker.setZIndexOffset(marker===selectedMarker?1000:0);}if(p)map.current.panInside([p.lat,p.lng],{padding:[60,60],animate:false});},[ready,selectedId,positions]);
+ useEffect(()=>{if(!ready||!map.current)return;const points=latest.current.places;if(points.length>1)map.current.fitBounds(points.map(p=>[p.lat,p.lng] as [number,number]),{padding:[40,40],maxZoom:14,animate:false});else map.current.setView([points[0]?.lat||33.775,points[0]?.lng||-118.385],points.length?15:12,{animate:false});},[ready,fitKey===undefined?positions:fitKey]);
+ useEffect(()=>{if(!ready)return;import('leaflet').then(L=>{if(!originLayer.current)return;originLayer.current.clearLayers();if(origin)L.circleMarker([origin.lat,origin.lng],{radius:7,color:'#fff',weight:3,fillColor:'#3475b4',fillOpacity:1}).bindTooltip('Distance starting point').addTo(originLayer.current);});},[ready,origin?.lat,origin?.lng]);
+ return <div className={`local-map live-map ${className}`}><div ref={container} className="leaflet-host" role="region" aria-label="Interactive map of local places"/>{!ready&&!error&&<div className="map-error" role="status">Loading map…</div>}{error&&<div className="map-error" role="status">{error}</div>}<div className="map-disclaimer">Approximate pins · Use directions for the entrance</div></div>;
 }

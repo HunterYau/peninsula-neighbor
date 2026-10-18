@@ -1,0 +1,35 @@
+import {distanceMiles,type Listing} from './community-model.ts';
+export type MapBounds={north:number;south:number;east:number;west:number};
+export type Position={lat:number;lng:number};
+type Interval=[string,string];
+export type PlaceHours={week:Interval[][];source:string;checked:string;note:string;holidays?:'pvld'};
+const daily=(open:string,close:string):Interval[][]=>Array.from({length:7},()=>[[open,close]]);
+const branches:Interval[][]=[[],[['10:00','18:00']],[['10:00','18:00']],[['10:00','18:00']],[['10:00','18:00']],[['14:00','18:00']],[['10:00','17:00']]];
+const library={source:'https://www.pvld.org/locations',checked:'2026-10-18',note:'Regular public library hours. Published district holidays are included; temporary closures and service hours can differ.',holidays:'pvld' as const};
+export const placeHours:Record<string,PlaceHours>={
+ 'malaga-library':{...library,week:branches},'miraleste-library':{...library,week:branches},
+ 'peninsula-library':{...library,week:[[['13:00','17:00']],...Array.from({length:4},():Interval[]=>[['10:00','20:00']]),[['14:00','18:00']],[['10:00','17:00']]]},
+ 'point-vicente':{week:daily('10:00','17:00'),source:'https://www.rpvca.gov/1204/Visit-Point-Vicente-Interpretive-Center',checked:'2026-10-18',note:'Museum hours, not trail or park hours. Confirm holidays and temporary closures with the city.'},
+ 'yellow-vase':{week:[[['07:00','21:00']],...Array.from({length:4},():Interval[]=>[['07:00','16:00']]),[['07:00','21:00']],[['07:00','21:00']]],source:'https://www.yellowvase.com/',checked:'2026-10-18',note:'Malaga Cove location. Dinner is listed Friday–Sunday, 5–9 PM. Holiday and special hours can differ.'},
+ 'ranch-market':{week:[[['08:00','16:00']],...Array.from({length:5},():Interval[]=>[['08:00','18:00']]),[['08:00','16:00']]],source:'https://www.malagacoveranchmarket.com/',checked:'2026-10-18',note:'Market hours. The deli closes 30 minutes earlier. Holiday and special hours can differ.'},
+ 'lunada-market':{week:daily('08:00','20:00'),source:'https://lunadamarket.com/',checked:'2026-10-18',note:'Market hours. Kitchen patio: daily 7:30 AM–4 PM; takeout: Mon–Tue 8 AM–4 PM, Wed–Sun 8 AM–7 PM. Check the source for special hours.'}
+};
+export function pacificNow(now:Date){const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);const get=(type:string)=>p.find(v=>v.type===type)!.value;return {day:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(get('weekday')),clock:`${get('hour')}:${get('minute')}`,date:`${get('year')}-${get('month')}-${get('day')}`};}
+function libraryHoliday(date:string){const [year,month,day]=date.split('-').map(Number),weekday=new Date(Date.UTC(year,month-1,day)).getUTCDay();if(month===1&&day>=15&&day<=21&&weekday===1||month===5&&day>=25&&weekday===1||month===9&&day<=7&&weekday===1||month===11&&day===11)return true;const thanksgiving=1+((4-new Date(Date.UTC(year,10,1)).getUTCDay()+7)%7)+21;if(month===11&&(day===thanksgiving||day===thanksgiving+1))return true;for(const [m,d] of [[1,1],[7,4],[12,24],[12,25]]){if(month===m&&day===d)return true;if(new Date(Date.UTC(year,m-1,d)).getUTCDay()===0&&month===m&&day===d+1)return true;}return false;}
+export const clockLabel=(clock:string)=>{const [h,m]=clock.split(':').map(Number);return `${h%12||12}${m?`:${String(m).padStart(2,'0')}`:''} ${h>=12?'PM':'AM'}`;};
+export function hoursStatus(id:string,now=new Date()){
+ const hours=placeHours[id];if(!hours)return {open:null,label:'Hours not published',today:'Check the official website',hours:null};const p=pacificNow(now),holiday=hours.holidays==='pvld'&&libraryHoliday(p.date);let intervals=holiday?[]:hours.week[p.day];
+ if(id==='lunada-market'){const thanksgiving=1+((4-new Date(Date.UTC(Number(p.date.slice(0,4)),10,1)).getUTCDay()+7)%7)+21;if(p.date.endsWith('-10-31'))intervals=[['08:00','18:00']];if(p.date.endsWith(`-11-${thanksgiving}`))intervals=[['08:00','14:00']];}
+ const current=intervals.find(([a,b])=>p.clock>=a&&p.clock<b),next=intervals.find(([a])=>p.clock<a);return {open:!!current,label:holiday?'Closed · district holiday':current?`Open · closes ${clockLabel(current[1])}`:next?`Closed · opens ${clockLabel(next[0])}`:'Closed today',today:intervals.length?intervals.map(([a,b])=>`${clockLabel(a)}–${clockLabel(b)}`).join(', '):'Closed',hours};
+}
+export function withinBounds(point:Position,bounds:MapBounds){return point.lat>=bounds.south&&point.lat<=bounds.north&&point.lng>=bounds.west&&point.lng<=bounds.east;}
+export function estimateMinutes(miles:number,mode:'drive'|'walk'){return Math.ceil(miles*1.609344*1.35/(mode==='walk'?4.5:35)*60)+(mode==='walk'?0:8);}
+export function directionsUrl(item:Listing,mode:'drive'|'walk'){const destination=item.location&&item.location!==item.area?`${['event','volunteer'].includes(item.kind)?'':item.title+', '}${item.location}, ${item.area}`:item.lat!==null&&item.lng!==null?`${item.lat},${item.lng}`:`${item.title}, ${item.area}`;return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=${mode==='walk'?'walking':'driving'}`;}
+export type MapFilter={q:string;kind:string;category:string;area:string;openOnly:boolean;savedOnly:boolean;saved:string[];radius:number|null;center:Position;bounds:MapBounds|null;sort:'distance'|'name'|'soonest'};
+const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const aliases:Record<string,string[]>={coffee:['coffee','cafe'],cafes:['cafe'],libraries:['library','libraries'],parks:['park'],trails:['trail'],walks:['walk','path','trail'],coastal:['coast'],restaurants:['restaurant','cafe','deli'],shops:['shop','market']};
+function matchesQuery(item:Listing,terms:string[]){const hay=normalize(`${item.title} ${item.body} ${item.category} ${item.location} ${item.area}`);return terms.every(t=>(aliases[t]||[t]).some(word=>hay.includes(word)));}
+export function mapListings(items:Listing[],o:MapFilter,now=new Date()){
+ const terms=normalize(o.q).trim().split(/\s+/);
+ return items.filter(i=>i.status!=='cancelled'&&(!i.ends||Date.parse(i.ends)>now.valueOf())&&(o.kind==='all'||o.kind==='places'&&['place','business'].includes(i.kind)||o.kind===i.kind)&&(o.area==='All areas'||i.area===o.area||i.area==='Across the Peninsula')&&(o.category==='All categories'||i.category===o.category)&&(!o.savedOnly||o.saved.includes(i.id))&&matchesQuery(i,terms)&&(!o.openOnly||!i.starts&&hoursStatus(i.id,now).open===true)).map(i=>({...i,distance:i.lat!==null&&i.lng!==null?distanceMiles(o.center,{lat:i.lat,lng:i.lng}):null})).filter(i=>(o.radius===null||i.distance!==null&&i.distance<=o.radius)&&(!o.bounds||i.lat!==null&&i.lng!==null&&withinBounds({lat:i.lat,lng:i.lng},o.bounds))).sort((a,b)=>o.sort==='name'?a.title.localeCompare(b.title):o.sort==='soonest'?(a.starts||'9999').localeCompare(b.starts||'9999')||a.title.localeCompare(b.title):(a.distance??Infinity)-(b.distance??Infinity)||a.title.localeCompare(b.title));
+}

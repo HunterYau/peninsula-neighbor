@@ -6,6 +6,10 @@ Peninsula Neighbor brings local discovery, practical services, neighbor-to-neigh
 
 Real local photographs now appear on the home and Explore pages, with credited organizer imagery on event listings when available. See [photo sources and image behavior](docs/PHOTOS.md).
 
+**Map & nearby** (`#map`) provides a map and results list for places, businesses, upcoming events, and volunteering. Select a numbered pin or result for descriptions, photos, opening hours or event times, distance, approximate driving/walking time, bookmarks, sources, and directions. Pan/zoom and choose **Search this area** to filter by the visible map. Search by text, category, area, distance, published opening schedule, or saved items. Explore’s Map button opens this view; Smart Search also links to it.
+
+The map uses the installed Leaflet library and OpenStreetMap tiles, with attribution and no API key. Only known coordinates receive pins; entries without coordinates stay in the list unless a map-area or distance filter excludes them. Multiple listings at the same coordinates share a pin, with related listings available in details. Opening schedules in `lib/map-browser.ts` were checked against linked official sources on October 18, 2026. Status uses Pacific time and published PVLD holidays; temporary closures and special hours may differ. Unknown hours stay unknown. Times for events remain separate from venue opening hours. Distance uses a neighborhood center or an optional device position held only in the mounted page. Travel estimates use straight-line distance with a 1.35 road allowance, 35 km/h driving plus 8 minutes, or 4.5 km/h walking; they are not live routes or traffic estimates. Directions send only the public destination and travel mode to Google Maps, which asks for a starting point.
+
 ## Product
 
 | Area | Working capabilities |
