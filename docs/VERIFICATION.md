@@ -37,3 +37,12 @@ Automated tests exercise actual SQL and API logic, but do not establish resident
 - Discovery migration applied to local D1 successfully (six commands).
 - Built Worker HTTP checks returned 200 for the application, discovery feed, sightings, and versioned updater instructions. Browser-origin and missing-writer-header update attempts returned 403, malformed event payload returned 400, and an empty unattended update plus persisted readback returned 200.
 - Browser layout QA remains unavailable under the earlier preview approval restriction; no alternate browser access was attempted.
+
+### Hosted discovery readback and schedule
+
+- Initial hosted run exposed Workers' lack of `redirect: error`; switched to `manual` and reject non-2xx responses. A regression test verifies redirect rejection and that HTML is not accepted as a calendar. The suite now has **30 passing tests**, with TypeScript and the official Sites build passing.
+- The corrected hosted import processed 384 future timed calendar records: four RPV Recreation & Parks, 14 RPV community-calendar, and 366 PVLD listings. Three additional verified Chamber/Conservancy announcements were saved. This is a count of source records processed, not a claim of 387 unique events. The public feed conservatively consolidates matching fingerprints and returns the next 200.
+- All seven source-check records persisted with truthful outcomes. Peninsula Shopping Center's stale June event was omitted; uncertain PVPLC plant-sale times were omitted. No neighbor sightings or member activity were manufactured.
+- The private Site's supported service credential retrieved the current `discovery-v1` instructions, exercised the unattended writer without a visitor identity or browser Origin, and read back the saved hosted feed and source checks.
+- Linked cloud task `Automation_690cc59e88f48191b3d9aed4e3c54f3e` was saved enabled for daily 07:00 America/Los_Angeles, starting October 18, 2026. Creation verifies saved scheduling; its first scheduled execution has not yet been observed. The initial import above was run during setup through the same unattended writer.
+- The application remains owner-private. Browser visual inspection is still unverified under the earlier preview approval restriction.
