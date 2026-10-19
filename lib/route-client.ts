@@ -30,7 +30,7 @@ export async function fetchRoute(start:Position,end:Position,mode:TravelMode,sig
  const url=mode==='wheelchair'?'https://valhalla1.openstreetmap.de/route':routingUrl(start,end,mode);
  if(busy||Date.now()-lastRequest<1100)throw new Error('Please wait a moment between route requests.');
  busy=true;lastRequest=Date.now();const controller=new AbortController(),cancel=()=>controller.abort();signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)controller.abort();const timeout=setTimeout(cancel,12000);
- try{const response=await fetcher(url,{...(mode==='wheelchair'?{method:'POST',body:JSON.stringify(wheelchairRequest(start,end,via))}:{}),signal:controller.signal,credentials:'omit',referrerPolicy:'strict-origin-when-cross-origin',redirect:'error',headers:mode==='wheelchair'?{Accept:'application/json','Content-Type':'application/json','X-Client-Id':'peninsula-neighbor.hunteryau.chatgpt.site'}:{Accept:'application/json'}});if(!response.ok)throw new Error('The free routing service is unavailable. Open Google Maps for directions and ETA.');return mode==='wheelchair'?parseWheelchairRoute(await response.json(),start,end):parseRoute(await response.json());}
+ try{const response=await fetcher(url,{...(mode==='wheelchair'?{method:'POST',body:JSON.stringify(wheelchairRequest(start,end,via))}:{}),signal:controller.signal,credentials:'omit',referrerPolicy:'strict-origin-when-cross-origin',redirect:'error',headers:mode==='wheelchair'?{Accept:'application/json','Content-Type':'application/json','X-Client-Id':'peninsula-neighbor.hunteryau.chatgpt.site'}:{Accept:'application/json'}});if(!response.ok)throw new Error('The free routing service is unavailable. Open Google Maps for directions and ETA.');return mode==='wheelchair'?parseWheelchairRoute(await response.json(),start,end,via):parseRoute(await response.json());}
  catch(e){if(controller.signal.aborted)throw new Error('The route request was stopped or timed out. Try again or open Google Maps.');throw e;}
  finally{clearTimeout(timeout);signal.removeEventListener('abort',cancel);busy=false;}
 }
@@ -41,12 +41,13 @@ export function wheelchairRequest(start:Position,end:Position,via?:Position){
  if(!validPosition(start)||!validPosition(end)||via&&!validPosition(via))throw new Error('Valid route points are required.');
  return {locations:[start,...(via?[via]:[]),end].map(p=>({lat:p.lat,lon:p.lng,search_filter:{exclude_steps:true}})),costing:'pedestrian',costing_options:{pedestrian:{type:'wheelchair',step_penalty:43200}},format:'osrm',shape_format:'geojson',units:'kilometers',language:'en-US'};
 }
-export function parseWheelchairRoute(data:any,start:Position,end:Position):RouteSummary{
+export function parseWheelchairRoute(data:any,start:Position,end:Position,via?:Position):RouteSummary{
  const r=data?.routes?.[0];if(data?.code!=='Ok'||!r||!Array.isArray(r.geometry?.coordinates)||r.geometry.coordinates.length<2)throw new Error('No wheelchair-aware route was found. Confirm access with the destination.');
  const coords=r.geometry.coordinates;if(coords.length>100000||!coords.every((c:any)=>Array.isArray(c)&&validPosition({lng:c[0],lat:c[1]})))throw new Error('Invalid wheelchair route geometry.');
  const meters=(a:Position,b:Position)=>{const x=(a.lat-b.lat)*111320,y=(a.lng-b.lng)*111320*Math.cos(a.lat*Math.PI/180);return Math.hypot(x,y);};
  const adjusted={...data,waypoints:[{distance:meters(start,{lat:coords[0][1],lng:coords[0][0]})},{distance:meters(end,{lat:coords.at(-1)[1],lng:coords.at(-1)[0]})}]};
  const route=parseRoute(adjusted);
+ if(via&&route.geometry&&!routeNearPoint(route.geometry,via,25))throw new Error('The routing service could not connect closely enough to the selected ramp. Choose a different ramp and confirm the entrance.');
  if(route.steps?.some(s=>/\b(stairs|steps|stairway)\b/i.test(s.instruction)))throw new Error('The returned route includes stairs. It has been withheld; choose a different ramp or destination and confirm access.');
  return {...route,provider:'Valhalla / OpenStreetMap',wheelchair:true};
 }
