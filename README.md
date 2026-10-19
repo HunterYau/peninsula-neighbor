@@ -106,3 +106,9 @@ See [COMMUNITY-FEATURES.md](docs/COMMUNITY-FEATURES.md) for the user flows, admi
 The Today card uses a PVE-area Open-Meteo forecast, with the free National Weather Service hourly and daily forecasts as a server-side backup. Sources and forecast times are shown in Pacific time. Refresh requests bypass browser caching; the server shares requests and limits upstream refreshes to once per 30 seconds. Healthy responses are cached for five minutes. If both providers fail, a previously loaded forecast is shown only while less than an hour old and is explicitly marked as older data. Unknown values remain blank; an alert feed failure is never displayed as “no alerts.” Weather is an area forecast, not a reading from the visitor’s current location.
 
 Provider references: [Open-Meteo documentation](https://open-meteo.com/en/docs), [NWS API documentation](https://www.weather.gov/documentation/services-web-api).
+
+### Community maps
+
+The prominent **Community map** supports route lines, turn instructions, distance, estimated travel time and arrival, start-point selection, location permission, zoom/pan, marker clustering, and an expanded map. Layers add real mapped ramps and entrances with wheelchair-aware routing, delayed coyote report cells, official emergency resources, and moderated resident reports. The Volunteer page includes a schedule and service-hour match engine. Administrators get private neighborhood problem patterns and expandable catalog coverage analysis.
+
+Wheelchair routes are a beta planning aid: missing curb/slope/closure data prevents a guarantee of step-free access. The coyote layer is a delayed report summary, not an authoritative hazard alert. See [community map sources, privacy and limitations](docs/COMMUNITY-MAPS.md) for the complete data policy and source links.

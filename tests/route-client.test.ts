@@ -15,7 +15,7 @@ test('location denial, timeout, unsupported browsers, and invalid positions fail
 test('route URLs use separate road and footpath profiles and longitude-first coordinates',()=>{
  const driving=new URL(routingUrl(start,end,'drive')),walking=new URL(routingUrl(start,end,'walk'));
  assert.equal(driving.host,'routing.openstreetmap.de');assert.match(driving.pathname,/routed-car\/route\/v1\/driving\/-118.402000,33.787000;-118.389100,33.800300/);assert.match(walking.pathname,/routed-foot\/route\/v1\/foot/);
- assert.equal(driving.searchParams.get('overview'),'false');assert.equal(driving.searchParams.get('radiuses'),'500;250');
+ assert.equal(driving.searchParams.get('overview'),'full');assert.equal(driving.searchParams.get('geometries'),'geojson');assert.equal(driving.searchParams.get('steps'),'true');assert.equal(driving.searchParams.get('radiuses'),'500;250');
  assert.throws(()=>routingUrl({lat:100,lng:0},end,'drive'),/valid starting point/);assert.notEqual(routeKey(start,end,'drive'),routeKey(start,end,'walk'));
 });
 test('route responses require real finite distance/time and nearby snapped endpoints',()=>{
