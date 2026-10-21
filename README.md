@@ -6,9 +6,13 @@ Peninsula Neighbor brings local discovery, practical services, neighbor-to-neigh
 
 Real local photographs now appear on the home and Explore pages, with credited organizer imagery on event listings when available. See [photo sources and image behavior](docs/PHOTOS.md).
 
-The layout groups navigation around discovery, community, and personal tools. Today uses complete rows for its welcome, shortcuts, places, community, and planning sections; Volunteer uses a wider opportunity grid. On tablets and phones, a keyboard-accessible navigation drawer leaves more room for content. Shared spacing and responsive form layouts live in `app/layout.css`, preserving the existing visual palette and application workflows. Credited local photography also introduces Volunteer and Local Guides.
+The redesign on `codex/peninsula-redesign` uses muted coastal colors, credited local photography, and focused subpages. Home introduces the map, discovery, resident guide, and community. Explore, Community, and My Space each have a landing page with contextual navigation. Volunteer programs, matching, and hour tracking have separate pages. Old hash links remain compatible.
 
-**Map & nearby** (`#map`) provides a map and results list for places, businesses, upcoming events, and volunteering. Select a numbered pin or result for descriptions, photos, opening hours or event times, distance, approximate driving/walking time, bookmarks, sources, and directions. Pan/zoom and choose **Search this area** to filter by the visible map. Search by text, category, area, distance, published opening schedule, or saved items. Explore’s Map button opens this view; Smart Search also links to it.
+The branded `/sign-in` page hands off to the platform's secure account page, where supported email, Google, Apple, and Microsoft account methods are selected. The site never collects passwords. Returning users reach `/welcome` for optional display name, area, and interests; they can continue with no interests or skip the step. Preferences remain editable in My Space.
+
+The `/resources` resident guide adds 29 original guides based on official RPV, PVE, Rolling Hills Estates, Rolling Hills, library, and transit sources. Each guide has its own shareable URL, preparation notes, official links, a source check date, and a bookmark. Guides also appear in Smart Search. See [redesign routes and publication](docs/REDESIGN.md).
+
+**Map & nearby** (`/map`) provides a map and results list for places, businesses, upcoming events, and volunteering. Select a numbered pin or result for descriptions, photos, opening hours or event times, distance, approximate driving/walking time, bookmarks, sources, and directions. Pan/zoom and choose **Search this area** to filter by the visible map. Search by text, category, area, distance, published opening schedule, or saved items. Explore’s Map button opens this view; Smart Search also links to it.
 
 The map uses the installed Leaflet library and OpenStreetMap tiles, with attribution and no API key. Only known coordinates receive pins; entries without coordinates stay in the list unless a map-area or distance filter excludes them. Multiple listings at the same coordinates share a pin, with related listings available in details. Opening schedules in `lib/map-browser.ts` were checked against linked official sources on October 18, 2026. Status uses Pacific time and published PVLD holidays; temporary closures and special hours may differ. Unknown hours stay unknown. Times for events remain separate from venue opening hours. The map asks visitors to allow current location or choose a neighborhood. Browser permission is requested only after an affirmative click; device coordinates, accuracy, and routing results stay in the mounted page. Nearest sorting uses straight-line distance, clearly labeled. Formula-based map travel times have been removed. Selected places offer on-demand road/footpath distance and time from FOSSGIS/OSRM; a visible notice explains that the starting point and destination are sent to that provider, which logs requests. Requests are limited to one at a time and at least 1.1 seconds apart, with timeouts, cancellation, and five-minute page-memory caching. Google Maps actions appear on each result, in details, and below the map. Directions include the device start only after the visitor permits location; otherwise Google Maps chooses or asks for a starting point. Google Maps handles its own traffic and ETA. See [routing and location behavior](docs/ROUTING.md).
 
@@ -16,7 +20,7 @@ The map uses the installed Leaflet library and OpenStreetMap tiles, with attribu
 
 | Area | Working capabilities |
 | --- | --- |
-| Today | Daily overview, live PVE-area weather, NWS weather-alert status, community activity, upcoming events, reminders, and preparedness progress |
+| Home | Short introduction, prominent map access, live PVE-area weather, NWS weather-alert status, and useful official resources |
 | Community | Publish offers, requests, free exchanges, lost-and-found notes, recommendations, and ideas; topic and area context; server search and pagination; replies; author controls; resolved state; expiry; reporting; complementary help suggestions |
 | Private inbox | Start a conversation from a post; participant-only access; unread tracking; earlier-message pagination; conversation closure; export of loaded messages |
 | Smart search & map | Shared search across events, volunteer roles, businesses, places, and resources; area/distance/date/category/type/age filters; interactive map and directions |
@@ -45,6 +49,8 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_lowly_lily_hollister.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_parched_bastion.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_smiling_rawhide_kid.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0005_tiresome_moira_mactaggert.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0006_green_adam_warlock.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 
@@ -93,7 +99,7 @@ Messages refresh when a conversation is opened or refreshed; no email or push no
 
 The app does not verify residency, certify volunteer hours, reserve outside venues, submit city requests, or send emergency notifications. Maps and travel estimates are approximate. External calendars remain with their organizers; the app does not imply that a program has a confirmed date or opening without a source. Check official information before acting.
 
-The private hosted audience and private GitHub repository remain private unless their owner explicitly approves a change. For submission, review the current hackathon requirements, including its public-repository requirement. Do not claim interviews, resident adoption, or outcomes that have not occurred.
+The existing hosted audience and GitHub repository visibility are preserved during publication. For submission, review the current hackathon requirements, including its public-repository requirement. Do not claim interviews, resident adoption, or outcomes that have not occurred.
 
 The original v1 source is preserved in Git history and the local `base-v1` tag. This project was created with AI assistance; disclose tools in the submission as required. All product code is inspectable. Local facts and primary sources are documented in [SOURCES.md](docs/SOURCES.md).
 

@@ -1,4 +1,5 @@
 'use client';
+import {pageQuery} from '../../lib/navigation';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {ArrowLeft,ArrowUpRight,Bookmark,Clock,LocateFixed,MapPin,Navigation,Search,SlidersHorizontal,X,Map as MapIcon,Store,CalendarDays,HandHeart,ShieldCheck} from 'lucide-react';
 import {areaCenters,interests,type Listing} from '../../lib/community-model';
@@ -26,7 +27,7 @@ export default function MapBrowser({core,extras=[],onlyExtras=false,ramps=[],def
  useEffect(()=>{if(!expanded)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setExpanded(false);};window.addEventListener('keydown',close);return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',close);};},[expanded]);
  const canvas=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null),locationRequest=useRef(0);
  useEffect(()=>{const timer=setInterval(()=>setNow(new Date()),60000);return()=>{clearInterval(timer);locationRequest.current++;};},[]);
- useEffect(()=>{const p=new URLSearchParams(window.location.hash.split('?')[1]||'');const query=p.get('q'),type=p.get('type'),id=p.get('place');if(query)setQ(query);if(type&&kinds.some(k=>k.id===type))setKind(type);if(id){setKind('all');setSelectedId(id);}},[]);
+ useEffect(()=>{const p=pageQuery();const query=p.get('q'),type=p.get('type'),id=p.get('place');if(query)setQ(query);if(type&&kinds.some(k=>k.id===type))setKind(type);if(id){setKind('all');setSelectedId(id);}},[]);
  const center=customOrigin||geo||areaCenters[origin]||areaCenters['Palos Verdes Estates'];
  const options={q,kind,category,area,openOnly,savedOnly,saved:core.prefs.saved,radius:radius?Number(radius):null,center,bounds:null,sort};
  const candidates=useMemo(()=>mapListings(listings,options,now),[listings,q,kind,category,area,openOnly,savedOnly,core.prefs.saved,radius,center.lat,center.lng,sort,now]);

@@ -1,0 +1,1 @@
+export default function NotFound(){return <main className="not-found"><h1>That page isn’t here.</h1><p>Find your way back to the Peninsula.</p><a className="button primary" href="/">Go home</a><a className="text-link" href="/map">Open the community map</a></main>;}

@@ -1,3 +1,4 @@
+import {officialResources} from './official-resources.ts';
 import {places,services,opportunities,curatedDate} from './catalog.ts';
 import {decodePhoto,placePhoto} from './photos.ts';
 import {eventKey} from './discovery.ts';
@@ -10,6 +11,7 @@ const base=(id:string,kind:string,title:string,body:string,area:string,category:
 function locate(location:string){const place=places.find(p=>location.toLowerCase().includes(p.name.toLowerCase().replace(' · Malaga Cove','')));return place?{lat:place.lat,lng:place.lng,approximate:true}:{lat:null,lng:null,approximate:false};}
 export async function communityCatalog(db:Database){
  const listings:Listing[]=[...places.map(p=>({...base(p.id,p.category==='Food & local shops'?'business':'place',p.name,p.description+' '+p.detail,p.area,p.category==='Food & local shops'?'Food':p.category==='Libraries & learning'?'Learning':'Environment',p.url),photo:placePhoto(p.id),location:p.address,lat:p.lat,lng:p.lng,approximate:true,eligibility:p.access})),...services.map(s=>({...base(`service:${s.id}`,'resource',s.name,s.description,s.area,s.category==='Family & learning'?'Learning':s.category==='Outdoors & environment'?'Environment':s.category==='City & civic life'?'Civic':'Support',s.url),contact:s.phone||''})),...opportunities.map(o=>({...base(`volunteer:${o.id}`,'volunteer',o.name,o.description,o.area,o.category,o.url),minimumAge:o.minimumAge||null,eligibility:o.tags.join(' · '),...locate(o.name)}))];
+ const official=officialResources.map(r=>({...base(`official:${r.id}`,'resource',r.title,r.summary+' '+r.details.join(' '),r.area,r.topic==='parks-libraries'?'Learning':r.topic==='permits-reporting'?'Civic':'Support',r.url),location:r.area,eligibility:r.prepare,contact:r.phone||'',verified:r.checked,verification:'Official source checked · independent guide'}));listings.push(...official);
  const now=new Date().toISOString();
  const discovered=(await db.prepare("SELECT * FROM discoveries WHERE ends>? AND status IN ('published','cancelled') ORDER BY starts,checked DESC LIMIT 1000").bind(now).all()).results;
  const seen=new Set<string>();

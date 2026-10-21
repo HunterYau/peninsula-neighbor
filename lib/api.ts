@@ -4,6 +4,8 @@ import {decodePhoto} from './photos.ts';
 import {readDiscoveries,sightingSchema} from './discovery.ts';
 import {communityApi,CommunityError} from './community-api.ts';
 import {mapCommunityApi} from './map-community-api.ts';
+import {onboardingSchema} from './onboarding.ts';
+import {memberSchema} from './community-model.ts';
 export type Identity={userId:string;fullName:string|null;email?:string};
 export type Database={prepare(sql:string):{bind(...args:unknown[]):any;first():Promise<any>;all():Promise<{results:any[]}>;run():Promise<any>};batch(queries:any[]):Promise<any[]>};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -43,6 +45,24 @@ export async function handleApi(req:Request,db:Database,user:Identity|null,confi
       if(!id&&method==='GET')return json({sightings:(await all("SELECT s.id,s.title,s.body,s.area,s.location,s.url,s.created,s.expires,u.name,r.status AS review,(s.author=?) AS mine FROM sightings s JOIN profiles u ON u.id=s.author LEFT JOIN content_reviews r ON r.id=s.id AND r.kind='sighting' WHERE s.expires>? AND (r.id IS NULL OR r.status='approved' OR s.author=?) ORDER BY s.created DESC LIMIT 100",uid,now(),uid)).map(s=>({...s,mine:!!s.mine}))});
       if(!id&&method==='POST'){const s=await input(req,sightingSchema),id=crypto.randomUUID();await db.batch([stmt('INSERT INTO sightings (id,author,title,body,area,location,url,created,expires) VALUES (?,?,?,?,?,?,?,?,?)',id,uid,s.title,s.body,s.area,s.location,s.url,now(),new Date(Date.now()+(s.hours??4)*3600000).toISOString()),stmt("INSERT INTO content_reviews (id,kind,status) VALUES (?,'sighting','pending')",id)]);return json({id,status:'pending'},201);}
       if(id&&method==='DELETE'){const s=await one('SELECT author FROM sightings WHERE id=?',id);if(!s)throw new HttpError(404,'Sighting not found.');if(s.author!==uid)throw new HttpError(403,'Only the author can end this sighting.');await run('DELETE FROM sightings WHERE id=?',id);return json({ok:true});}
+    }
+    if(path[0]==='onboarding'){
+      if(!user)throw new HttpError(401,'Sign in to personalize your account.');
+      if(method==='GET'){
+        const completed=await one('SELECT completed,skipped FROM onboarding WHERE user=?',uid),row=await one('SELECT data FROM member_settings WHERE user=?',uid);
+        return json({completed:!!completed,skipped:!!completed?.skipped,email:user.email||'',profile:await one('SELECT name,area,bio FROM profiles WHERE id=?',uid),settings:memberSchema.parse(row?JSON.parse(row.data):{})});
+      }
+      if(method==='PUT'){
+        const data=await input(req,onboardingSchema),changes=[];
+        if(!data.skip){
+          const profile=await one('SELECT name,area FROM profiles WHERE id=?',uid),row=await one('SELECT data FROM member_settings WHERE user=?',uid),pref=await one('SELECT data FROM preferences WHERE user=?',uid);
+          const settings=memberSchema.parse({...row?JSON.parse(row.data):{},area:data.area||profile.area,interests:[...new Set(data.interests)]});
+          const preferences=preferenceSchema.parse({...pref?JSON.parse(pref.data):defaultPreferences(),area:settings.area,interests:settings.interests});
+          changes.push(stmt('UPDATE profiles SET name=?,area=? WHERE id=?',data.name||profile.name,settings.area,uid),stmt('INSERT INTO member_settings (user,data,updated) VALUES (?,?,?) ON CONFLICT(user) DO UPDATE SET data=excluded.data,updated=excluded.updated',uid,JSON.stringify(settings),now()),stmt('INSERT INTO preferences (user,data,updated) VALUES (?,?,?) ON CONFLICT(user) DO UPDATE SET data=excluded.data,updated=excluded.updated',uid,JSON.stringify(preferences),now()));
+        }
+        changes.push(stmt('INSERT INTO onboarding (user,completed,skipped) VALUES (?,?,?) ON CONFLICT(user) DO UPDATE SET completed=excluded.completed,skipped=excluded.skipped',uid,now(),data.skip?1:0));
+        await db.batch(changes);return json({ok:true,skipped:data.skip});
+      }
     }
     if(path[0]==='me'){
       if(!user)return json({profile:null});

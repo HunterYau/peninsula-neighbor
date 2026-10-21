@@ -47,3 +47,5 @@ export const hourVerifications=sqliteTable('hour_verifications',{hour:text('hour
 
 export const mapReports=sqliteTable('map_reports',{id:text('id').primaryKey(),author:text('author').notNull().references(()=>profiles.id),kind:text('kind').notNull(),category:text('category').notNull(),area:text('area').notNull(),title:text('title').notNull(),details:text('details').notNull(),lat:text('lat').notNull(),lng:text('lng').notNull(),observed:text('observed').notNull(),sourceUrl:text('source_url').notNull().default(''),status:text('status').notNull().default('pending'),note:text('note').notNull().default(''),created:text('created').notNull(),reviewed:text('reviewed')},t=>[index('map_reports_status_idx').on(t.kind,t.status,t.observed)]);
 export const mapSourceCache=sqliteTable('map_source_cache',{id:text('id').primaryKey(),data:text('data').notNull(),checked:text('checked').notNull()});
+
+export const onboarding=sqliteTable('onboarding',{user:text('user').primaryKey().references(()=>profiles.id),completed:text('completed').notNull(),skipped:integer('skipped',{mode:'boolean'}).notNull().default(false)});
