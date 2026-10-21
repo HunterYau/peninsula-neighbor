@@ -16,19 +16,19 @@ The model download is approximately 352 MB plus its runtime. A compatible WebGPU
 
 Question matching retrieves up to four relevant sources, with source types and original check dates. Cancelled events, expired events/deadlines, and incompatible explicitly stated ages are excluded. Relative event dates use the Pacific calendar. Unknown ages, opening hours, route access and current hazard status stay unknown. Follow-up references can reuse the preceding question; a new subject does not silently inherit it.
 
-The model sees bounded excerpts, explicit requirements and schedules, the current date, and recent chat context. Its instructions require concise answers with numbered citations, admission of missing facts, and treating retrieved text as data rather than instructions. Sources remain available independently of the model text. This reduces hallucination; it does not certify every generated sentence. The UI tells users to check sources, particularly for changing details. Unsupported questions get an honest source-based response instead of an ungrounded model guess.
+The model sees bounded excerpts, explicit requirements and schedules, the current date, and the resolved subject of follow-up questions. Its instructions require concise answers with numbered citations, admission of missing facts, and treating retrieved text as data rather than instructions. Sources remain available independently of the model text. This reduces hallucination; it does not certify every generated sentence. The UI tells users to check sources, particularly for changing details. Unsupported questions get an honest source-based response instead of an ungrounded model guess.
 
 ## Downloads, privacy and cancellation
 
-Only model files from these pinned public repositories can pass through the model download route:
+The browser downloads model files directly from these pinned public repositories:
 
 - `mlc-ai/Qwen3-0.6B-q4f16_1-MLC` at `8c14ce481d4c692769976ad52afea453a102df19`.
 - `mlc-ai/Qwen3-0.6B-q4f32_1-MLC` at `9b4f0b05b08c692ea86fe151ea878406ad22f428`.
 
-The route accepts a fixed filename allowlist, streams weight shards without buffering them in the server, and uses immutable caching. It does not forward user cookies, authorization, question text, or arbitrary URLs to the model host. The runtime WASM comes from WebLLM's versioned official model-library URL. No inference requests go to Hugging Face or an AI provider.
+Direct downloads avoid sending hundreds of megabytes through the website's server. The model host receives normal file-download metadata; questions and conversations are not sent there. The runtime WASM comes from WebLLM's versioned official model-library URL. No inference requests go to Hugging Face or an AI provider.
 
 Questions and the preceding question go to this website for source retrieval. The conversation lives in the mounted page and is not stored in D1, the account, localStorage or server logs by application code. Reloading or leaving the chat clears it. Normal infrastructure request metadata and browser model caching still exist. Stop aborts retrieval/model operations and terminates the worker, releasing GPU resources; Clear also removes the displayed conversation. Navigation tears the worker down.
 
 ## Verification
 
-Run `npm run check`, `npm test`, and `npm run build`. Tests cover relevance, missing evidence, publication boundaries, age and date constraints, prompt bounds, same-origin input validation, no account writes, cancellation, and the fixed streaming model-file route. Browser QA must separately prove real model generation, multiple streamed deltas, follow-up behavior, cancellation, source-only mode and mobile layout. A passing build or fallback answer alone does not prove the model is operational.
+Run `npm run check`, `npm test`, and `npm run build`. Tests cover relevance, missing evidence, publication boundaries, age and date constraints, prompt bounds, exclusion of prior generated answers from factual context, streamed control-tag removal, same-origin input validation, no account writes, and cancellation. Browser QA must separately prove real model generation, multiple streamed deltas, follow-up behavior, cancellation, source-only mode and mobile layout. A passing build or fallback answer alone does not prove the model is operational.

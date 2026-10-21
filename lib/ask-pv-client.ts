@@ -25,7 +25,7 @@ export class LocalPVModel{
   const failure=new Promise<never>((_,reject)=>{worker.onerror=()=>reject(Error('The AI worker could not start. Quick source answers still work.'));});
   const variant=model.includes('q4f16')?'q4f16_1':'q4f32_1';
   const record=prebuiltAppConfig.model_list.find(r=>r.model_id===model);if(!record)throw Error('The local model configuration is unavailable.');
-  const appConfig={...prebuiltAppConfig,model_list:[{...record,model:`${window.location.origin}/api/ask-pv/model/${variant}/resolve/${modelRevisions[variant]}/`}]};
+  const appConfig={...prebuiltAppConfig,model_list:[{...record,model:`https://huggingface.co/mlc-ai/Qwen3-0.6B-${variant}-MLC/resolve/${modelRevisions[variant]}/`}]};
   try{this.engine=await abortable(Promise.race([CreateWebWorkerMLCEngine(worker,model,{appConfig,initProgressCallback:r=>progress(r.progress,r.text),logLevel:'ERROR'},{context_window_size:4096}),failure]),signal);}
   catch(error){this.dispose();throw error;}
  }

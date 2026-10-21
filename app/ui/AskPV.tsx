@@ -2,9 +2,9 @@
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {ArrowUpRight,BookOpen,Check,LoaderCircle,MessageCircle,Send,Square,Trash2} from 'lucide-react';
 import {LocalPVModel} from '../../lib/ask-pv-client';
-import {buildAskMessages,type AskKnowledge,type AskSource,type ChatTurn} from '../../lib/ask-pv';
+import {buildAskMessages,visibleAskAnswer,type AskKnowledge,type AskSource} from '../../lib/ask-pv';
 
-type Message={id:string;role:'user'|'assistant';content:string;sources:AskSource[];status:'working'|'done'|'stopped'|'error';engine?:'ai'|'source';note?:string;chunks?:number;firstTokenMs?:number;seconds?:number;question?:string};
+type Message={id:string;role:'user'|'assistant';content:string;sources:AskSource[];status:'working'|'done'|'stopped'|'error';engine?:'ai'|'source';note?:string;chunks?:number;firstTokenMs?:number;seconds?:number;question?:string;contextQuestion?:string};
 const examples=['Where can I volunteer as a teenager?','How do I report a coyote sighting in RPV?','Can the library deliver books to my home?','What can I do near Peninsula Center?'];
 function SourceCards({sources}:{sources:AskSource[]}){return sources.length?<details className="ask-sources" open><summary><BookOpen size={14}/>{sources.length} local {sources.length===1?'source':'sources'}</summary><div>{sources.map((s,i)=><div className="ask-source" key={s.id}><a href={s.url} target="_blank" rel="noopener noreferrer"><span>[{i+1}]</span><strong>{s.title}</strong><ArrowUpRight size={13}/></a><p>{s.verification}{s.checked?` · Checked ${s.checked.slice(0,10)}`:' · No check date provided'}</p><a className="text-link" href={s.localUrl}>Open in Peninsula Neighbor</a></div>)}</div></details>:null;}
 
@@ -21,15 +21,14 @@ export default function AskPV(){
   const question=value.trim();if(!question||question.length>600||busy.current)return;
   busy.current=true;follow.current=true;setDraft('');setAnnouncement('Finding local sources.');
   const assistantId=crypto.randomUUID(),abort=new AbortController();controller.current=abort;
-  const previousQuestion=messages.filter(m=>m.role==='user').at(-1)?.content;
-  const history:ChatTurn[]=messages.filter(m=>m.role==='user'||m.status==='done').slice(-4).map(m=>({role:m.role,content:m.content}));
+  const previousQuestion=messages.filter(m=>m.role==='assistant').at(-1)?.contextQuestion||messages.filter(m=>m.role==='user').at(-1)?.content;
   setMessages(old=>[...old.slice(-18),{id:crypto.randomUUID(),role:'user',content:question,sources:[],status:'done'},{id:assistantId,role:'assistant',content:'',sources:[],status:'working',question}]);
   setPhase('Finding local sources…');let knowledge:AskKnowledge|undefined;
   const timeout=setTimeout(()=>abort.abort('timeout'),300000);
   try{
    const response=await fetch('/api/ask-pv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,previousQuestion}),signal:abort.signal});
    const data=await response.json() as AskKnowledge&{error?:string};if(!response.ok)throw Error(data.error||'Local sources could not be loaded.');knowledge=data as AskKnowledge;
-   update(assistantId,{sources:knowledge.sources});
+   update(assistantId,{sources:knowledge.sources,contextQuestion:knowledge.contextQuestion});
    if(mode==='source'||knowledge.status!=='ready'){
     update(assistantId,{content:knowledge.answer,engine:'source',status:'done'});setAnnouncement('Source answer ready.');return;
    }
@@ -37,8 +36,8 @@ export default function AskPV(){
    if(!model.current.ready){setPhase('Loading free AI on your device…');setProgress(0);setLoadDetail('Preparing the model…');await model.current.load((fraction,text)=>{if(mounted.current&&!abort.signal.aborted){setProgress(Math.max(0,Math.min(1,fraction)));setLoadDetail(text.replace(/https?:\/\/\S+/g,'model files').slice(0,180));}},abort.signal);setLoaded(true);}
    if(abort.signal.aborted)throw new DOMException('Stopped','AbortError');
    setPhase('Writing your answer…');const started=performance.now();let answer='',chunks=0,firstTokenMs:number|undefined;
-   await model.current.stream(buildAskMessages(knowledge,history),token=>{answer+=token;chunks++;firstTokenMs??=Math.round(performance.now()-started);update(assistantId,{content:answer,engine:'ai',chunks,firstTokenMs});},abort.signal);
-   if(!answer.trim())throw Error('The local model did not return an answer.');
+   await model.current.stream(buildAskMessages(knowledge),token=>{answer+=token;chunks++;const visible=visibleAskAnswer(answer);if(visible)firstTokenMs??=Math.round(performance.now()-started);update(assistantId,{content:visible,engine:'ai',chunks,firstTokenMs});},abort.signal);
+   if(!visibleAskAnswer(answer).trim())throw Error('The local model did not return an answer.');
    update(assistantId,{status:'done',seconds:Math.round((performance.now()-started)/100)/10});setAnnouncement('Answer ready.');
   }catch(error){
    if(!mounted.current)return;
