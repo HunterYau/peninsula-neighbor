@@ -10,6 +10,7 @@ import {viewPaths,viewTitles,pathView,legacyDestination,parentView,sectionViews,
 import {SignInPage,SignOutLink,WelcomePage} from './AccountEntry';
 import {HomeLanding,SectionHub,AccountHub} from './NeighborhoodPages';
 import ResourceGuide from './ResourceGuide';
+import AskPV from './AskPV';
 import WeatherPanel,{weatherNumber,weatherTime} from './WeatherPanel';
 import CommunityMaps,{HouseholdPlan,VolunteerMatchEngine} from './CommunityMaps';
 import Photo,{PhotoCredit} from './Photo';
@@ -24,7 +25,7 @@ import type {Profile,Preferences,Post,Comment,CommunityEvent,HourEntry,Condition
 
 type Modal={kind:'contact';post:Post}|{kind:'place';place:Place}|{kind:'post';post:Post}|{kind:'new-post'}|{kind:'new-event'}|{kind:'event';event:CommunityEvent}|{kind:'report';id:string;contentType:'post'|'event'|'comment'|'sighting'|'discovery'}|{kind:'reminder'}|{kind:'hours'}|{kind:'profile'}|null;
 const navItems:{id:View;label:string;icon:typeof Home}[]=[
- {id:'today',label:'Home',icon:Home},{id:'map',label:'Community map',icon:Map},{id:'discover',label:'Explore',icon:Navigation},{id:'resources',label:'Resident guide',icon:BookOpen},{id:'connect',label:'Community',icon:Users},{id:'prepared',label:'Be prepared',icon:ShieldCheck},{id:'account',label:'My space',icon:Bookmark},{id:'admin',label:'Administrator',icon:ShieldCheck}
+ {id:'today',label:'Home',icon:Home},{id:'map',label:'Community map',icon:Map},{id:'ask',label:'Ask PV',icon:MessageCircle},{id:'discover',label:'Explore',icon:Navigation},{id:'resources',label:'Resident guide',icon:BookOpen},{id:'connect',label:'Community',icon:Users},{id:'prepared',label:'Be prepared',icon:ShieldCheck},{id:'account',label:'My space',icon:Bookmark},{id:'admin',label:'Administrator',icon:ShieldCheck}
 ];
 const routes=new Set(Object.keys(viewPaths));
 const STORE='pn-v2-preferences';
@@ -184,7 +185,7 @@ export default function CommunityApp({initialView='today',initialPath='/'}:{init
     if(modal.kind==='report')return <><span className="eyebrow">COMMUNITY CARE</span><h2>Flag content for review.</h2><p className="modal-description">Reports are saved for the site owner to review. They do not contact emergency services or guarantee an immediate response.</p><form onSubmit={async e=>{const data=formData(e);if(await mutate('reports','POST',{...data,target:modal.id,kind:modal.contentType},'Report saved for site-owner review.'))setModal(null);}}><Field label="What should the reviewer know?"><textarea name="reason" required minLength={5} maxLength={500} rows={4}/></Field><Submit ui={ui}>Submit report<Flag size={15}/></Submit></form></>;
   }
 
-  const renderView=()=>({discover:()=> <SectionHub section="discover"/>,connect:()=> <SectionHub section="connect"/>,account:()=> <AccountHub profile={profile}/>,resources:()=> <ResourceGuide initialPath={initialPath} saved={prefs.saved} toggleSave={toggleSave}/>,match:volunteer,hours:volunteer,signin:()=>null,welcome:()=>null,map:()=> <CommunityMaps core={core} admin={isAdmin}/>,find:()=> <SmartSearch core={core}/>,organizations:()=> <Organizations core={core}/>,contribute:()=> <CommunitySubmissions core={core}/>,activity:()=> <MemberWorkspace core={core}/>,admin:()=>isAdmin?<AdminReview core={core}/>:<div className="panel padded">Administrator access required.</div>,today:dashboard,community,inbox:inboxView,events:eventView,explore,services:serviceView,volunteer,planner,prepared:preparedness,guides:guideView,saved:savedView})[view]();
+  const renderView=()=>({ask:()=> <AskPV/>,discover:()=> <SectionHub section="discover"/>,connect:()=> <SectionHub section="connect"/>,account:()=> <AccountHub profile={profile}/>,resources:()=> <ResourceGuide initialPath={initialPath} saved={prefs.saved} toggleSave={toggleSave}/>,match:volunteer,hours:volunteer,signin:()=>null,welcome:()=>null,map:()=> <CommunityMaps core={core} admin={isAdmin}/>,find:()=> <SmartSearch core={core}/>,organizations:()=> <Organizations core={core}/>,contribute:()=> <CommunitySubmissions core={core}/>,activity:()=> <MemberWorkspace core={core}/>,admin:()=>isAdmin?<AdminReview core={core}/>:<div className="panel padded">Administrator access required.</div>,today:dashboard,community,inbox:inboxView,events:eventView,explore,services:serviceView,volunteer,planner,prepared:preparedness,guides:guideView,saved:savedView})[view]();
   if(view==='signin')return <SignInPage profile={profile} loading={!authReady}/>;
   if(view==='welcome')return <WelcomePage/>;
   const section=parentView(view);

@@ -16,6 +16,7 @@ export function suggestDay(places:Place[],options:{area:string;category:string;m
 }
 export function searchDirectory(places:Place[],services:Service[],query:string){const terms=query.toLowerCase().trim().split(/\s+/).filter(Boolean);return [...places.map(p=>({id:p.id,title:p.name,description:p.description,area:p.area,kind:'place',keywords:[p.category,...p.tags].join(' ')})),...services.map(s=>({id:s.id,title:s.name,description:s.description,area:s.area,kind:'service',keywords:s.keywords.join(' ')}))].map(item=>({...item,score:terms.reduce((score,t)=>score+(item.title.toLowerCase().includes(t)?5:0)+(item.keywords.toLowerCase().includes(t)?3:0)+(item.description.toLowerCase().includes(t)?1:0),0)})).filter(item=>!terms.length||terms.every(t=>`${item.title} ${item.description} ${item.keywords} ${item.area}`.toLowerCase().includes(t))).sort((a,b)=>b.score-a.score);}
 const localActions=[
+  {view:'ask',title:'Ask PV chatbot',keywords:'ask questions answers chatbot assistant local sources'},
   {view:'community',title:'Community board',keywords:'help offer request exchange free lost found pets neighbors posts'},
   {view:'inbox',title:'Private inbox',keywords:'message messages chat conversation contact private'},
   {view:'events',title:'Events & RSVPs',keywords:'calendar event weekend attend join gathering'},
