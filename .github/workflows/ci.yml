@@ -1,7 +1,7 @@
 name: Verify Peninsula Neighbor
 on:
   push:
-    branches: [main, codex/peninsula-redesign]
+    branches: [main, codex/peninsula-redesign, codex/pv-chatbot]
   pull_request:
   workflow_dispatch:
 permissions:
