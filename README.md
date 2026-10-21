@@ -8,7 +8,9 @@ Real local photographs now appear on the home and Explore pages, with credited o
 
 The redesign on `codex/peninsula-redesign` uses muted coastal colors, credited local photography, and focused subpages. Home introduces the map, discovery, resident guide, and community. Explore, Community, and My Space each have a landing page with contextual navigation. Volunteer programs, matching, and hour tracking have separate pages. Old hash links remain compatible.
 
-The branded `/sign-in` page hands off to the platform's secure account page, where supported email, Google, Apple, and Microsoft account methods are selected. The site never collects passwords. Returning users reach `/welcome` for optional display name, area, and interests; they can continue with no interests or skip the step. Preferences remain editable in My Space.
+The custom `/sign-in` page defaults to email/password login and account creation. The existing ChatGPT sign-in remains underneath, with Google, Apple and Microsoft choices on its secure hosted page. Passwords are stored as salted hashes in D1; protected cookies support Remember me for up to 30 days. Signup supplies a private recovery code because email resets are not configured. Accounts retain private profiles, interests and saved items. Password accounts remain separate from existing ChatGPT accounts and cannot claim owner/admin access by email. See [accounts and remembered sessions](docs/ACCOUNTS.md).
+
+Returning users reach `/welcome` for optional display name, area, and interests; they can continue with no interests or skip the step. Preferences remain editable in My Space.
 
 The `/resources` resident guide adds 29 original guides based on official RPV, PVE, Rolling Hills Estates, Rolling Hills, library, and transit sources. Each guide has its own shareable URL, preparation notes, official links, a source check date, and a bookmark. Guides also appear in Smart Search. See [redesign routes and publication](docs/REDESIGN.md).
 
@@ -51,6 +53,7 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0004_smiling_rawhide_kid.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0005_tiresome_moira_mactaggert.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0006_green_adam_warlock.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0007_needy_grey_gargoyle.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 
@@ -69,7 +72,7 @@ npm run build  # Client, server, and Worker artifact
 - **UI:** React 19, TypeScript, Vinext/Vite, Lucide icons, custom responsive CSS.
 - **API:** same-origin route handlers; Zod validation; bound SQL statements.
 - **Persistence:** Cloudflare D1; Drizzle schema and generated migrations. Personal data is scoped to the authenticated user on the server.
-- **Identity:** dispatch-owned Sign in with ChatGPT; no custom password handling. Email is never included in public posts or event data.
+- **Identity:** custom email/password accounts plus existing dispatch-owned ChatGPT sign-in; server-scoped identities, salted password hashes and opaque cookie sessions. Email is never included in public posts or event data.
 - **Local state:** preferences are also stored on-device for convenience and offline reminders. Sign-out clears the local workspace. A new signed-in workspace can preserve anonymous device preferences.
 - **Discovery:** scheduled first-party calendar imports and evidence-checked public announcements; persistent source checks, stale/cancelled states, and expiring neighbor sightings. See [the updater contract](docs/DISCOVERY.md).
 - **Conditions:** server-fetched Open-Meteo and NWS data with bounded timeouts and short caching. The client does not request location permission.

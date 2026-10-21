@@ -18,7 +18,7 @@ Legacy hash links are translated to canonical URLs; Back/Forward navigation rema
 
 ## Secure account entry
 
-`/sign-in?next=...` is a branded entry page. Its top-level anchor leads to the dispatch-owned `/signin-with-chatgpt` route. Email/password and supported Google, Apple or Microsoft choices belong to that hosted account page. No custom password storage, provider impersonation or separate OAuth credentials are introduced.
+`/sign-in?next=...` now defaults to real Peninsula Neighbor email/password login and signup. ChatGPT sign-in is an alternative underneath, preserving its top-level dispatch-owned anchor and hosted provider choices. Salted password hashes and hashed session tokens live in D1; protected cookies can remember devices. See [account storage, recovery and identity boundaries](ACCOUNTS.md).
 
 The return URL goes through `/welcome`, where display name, area and interests are optional. No selected interests is valid. Skip records completion without altering preferences. Saving updates the current member's profile and interests atomically, preserving saved places, preparedness, age, availability and reward settings. Subsequent sign-ins skip completed onboarding. My interests remains editable. Return paths are restricted to local paths and reject recursive authentication destinations.
 

@@ -6,7 +6,7 @@ import {communityApi,CommunityError} from './community-api.ts';
 import {mapCommunityApi} from './map-community-api.ts';
 import {onboardingSchema} from './onboarding.ts';
 import {memberSchema} from './community-model.ts';
-export type Identity={userId:string;fullName:string|null;email?:string};
+export type Identity={userId:string;fullName:string|null;email?:string;provider?:'local'|'platform'};
 export type Database={prepare(sql:string):{bind(...args:unknown[]):any;first():Promise<any>;all():Promise<{results:any[]}>;run():Promise<any>};batch(queries:any[]):Promise<any[]>};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 class HttpError extends Error{status:number;constructor(status:number,message:string){super(message);this.status=status;}}
@@ -36,7 +36,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null,confi
     }
     if(user)await run('INSERT OR IGNORE INTO profiles (id,name,area,bio) VALUES (?,?,?,?)',user.userId,(user.fullName?.split(' ')[0]||'Neighbor').slice(0,40),'Palos Verdes Estates','');
     const uid=user?.userId||'';
-    const admin=!!user?.email&&!!config.adminEmail&&user.email.toLowerCase()===config.adminEmail.toLowerCase();
+    const admin=user?.provider!=='local'&&!!user?.email&&!!config.adminEmail&&user.email.toLowerCase()===config.adminEmail.toLowerCase();
     const mapResponse=await mapCommunityApi(req,db,user,path,admin);if(mapResponse)return mapResponse;
     const communityResponse=await communityApi(req,db,user,path,admin);if(communityResponse)return communityResponse;
     if(path[0]==='discovery'&&!path[1]&&method==='GET')return json(await readDiscoveries(db));
