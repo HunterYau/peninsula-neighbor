@@ -56,7 +56,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null,confi
         const data=await input(req,onboardingSchema),changes=[];
         if(!data.skip){
           const profile=await one('SELECT name,area FROM profiles WHERE id=?',uid),row=await one('SELECT data FROM member_settings WHERE user=?',uid),pref=await one('SELECT data FROM preferences WHERE user=?',uid);
-          const settings=memberSchema.parse({...row?JSON.parse(row.data):{},area:data.area||profile.area,interests:[...new Set(data.interests)]});
+          const settings=memberSchema.parse({...row?JSON.parse(row.data):{},area:data.area||profile.area,interests:data.interests,...data.goals!==undefined?{goals:data.goals}:{},...data.placeTypes!==undefined?{placeTypes:data.placeTypes}:{},...data.helpStyles!==undefined?{helpStyles:data.helpStyles}:{}});
           const preferences=preferenceSchema.parse({...pref?JSON.parse(pref.data):defaultPreferences(),area:settings.area,interests:settings.interests});
           changes.push(stmt('UPDATE profiles SET name=?,area=? WHERE id=?',data.name||profile.name,settings.area,uid),stmt('INSERT INTO member_settings (user,data,updated) VALUES (?,?,?) ON CONFLICT(user) DO UPDATE SET data=excluded.data,updated=excluded.updated',uid,JSON.stringify(settings),now()),stmt('INSERT INTO preferences (user,data,updated) VALUES (?,?,?) ON CONFLICT(user) DO UPDATE SET data=excluded.data,updated=excluded.updated',uid,JSON.stringify(preferences),now()));
         }

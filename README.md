@@ -12,6 +12,8 @@ The custom `/sign-in` page defaults to email/password login and account creation
 
 Returning users reach `/welcome` for optional display name, area, and interests; they can continue with no interests or skip the step. Preferences remain editable in My Space.
 
+Discovery preferences now include six goals, 25 topics and activities, eight kinds of places, and nine ways to help. Choose fun outings, community service, places to visit, learning, meeting neighbors, or practical support, then refine the topics and activities you enjoy. The home recommendations and volunteer matcher use these choices with source descriptions, neighborhood, age, and availability, and explain actual matches. Existing interests are retained; new choices are optional and saved privately to the account. No paid recommendation API or behavior tracking is used.
+
 The `/resources` resident guide adds 29 original guides based on official RPV, PVE, Rolling Hills Estates, Rolling Hills, library, and transit sources. Each guide has its own shareable URL, preparation notes, official links, a source check date, and a bookmark. Guides also appear in Smart Search. See [redesign routes and publication](docs/REDESIGN.md).
 
 **Map & nearby** (`/map`) provides a map and results list for places, businesses, upcoming events, and volunteering. Select a numbered pin or result for descriptions, photos, opening hours or event times, distance, approximate driving/walking time, bookmarks, sources, and directions. Pan/zoom and choose **Search this area** to filter by the visible map. Search by text, category, area, distance, published opening schedule, or saved items. Explore’s Map button opens this view; Smart Search also links to it.

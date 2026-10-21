@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {viewPaths,pathView,legacyDestination,safeReturnPath,hostedSignInUrl} from '../lib/navigation.ts';
 import {officialResources,resourceTopics} from '../lib/official-resources.ts';
 import {communityCatalog} from '../lib/community-catalog.ts';
-import {searchListings} from '../lib/community-model.ts';
+import {searchListings,memberSchema} from '../lib/community-model.ts';
 import {handleApi} from '../lib/api.ts';
 import {database} from './database.ts';
 const alice={userId:'alice',fullName:'Alice Local',email:'alice@example.test'},bob={userId:'bob',fullName:'Bob'};
@@ -26,7 +26,7 @@ test('optional empty interests save atomically and preserve other account settin
  const{db,sqlite}=database();await handleApi(req('me'),db,alice);const settings={age:17,area:'Palos Verdes Estates',interests:['Arts'],days:[0,6],from:'10:00',until:'16:00',rewards:true};sqlite.prepare('INSERT INTO member_settings (user,data,updated) VALUES (?,?,?)').run('alice',JSON.stringify(settings),'2026-01-01');
  const prefs={saved:['official:pve-cares'],plan:[],area:'Palos Verdes Estates',prep:['zone'],reminders:[],interests:['Arts'],largeText:true};await handleApi(req('preferences','PUT',prefs),db,alice);
  assert.equal((await handleApi(req('onboarding','PUT',{area:'Rancho Palos Verdes',interests:[]}),db,alice)).status,200);
- const own=await(await handleApi(req('onboarding'),db,alice)).json() as any;assert.equal(own.profile.name,'Alice');assert.equal(own.completed,true);assert.deepEqual(own.settings,{...settings,area:'Rancho Palos Verdes',interests:[]});
+ const own=await(await handleApi(req('onboarding'),db,alice)).json() as any;assert.equal(own.profile.name,'Alice');assert.equal(own.completed,true);assert.deepEqual(own.settings,memberSchema.parse({...settings,area:'Rancho Palos Verdes',interests:[]}));
  const updated=(await(await handleApi(req('preferences'),db,alice)).json() as any).preferences;assert.deepEqual(updated,{...prefs,area:'Rancho Palos Verdes',interests:[]});
  assert.equal((await handleApi(req('onboarding','PUT',{name:'x',interests:['Invented']}),db,alice)).status,400);assert.equal((await(await handleApi(req('onboarding'),db,bob)).json() as any).profile.name,'Bob');
 });

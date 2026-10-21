@@ -12,6 +12,8 @@ Migration `0007_needy_grey_gargoyle.sql` adds `local_accounts` and `local_sessio
 - Sign-out: same-origin POST revokes the local session and clears its cookie, then the existing hosted sign-out removes platform identity. The app clears its cached personal workspace when changing accounts or signing out.
 - Abuse controls: bounded inputs, generic credential errors, same-origin JSON writes, per-email and hashed-IP request quotas, plus signup limits. Cookies and hashes never enter public API responses.
 
+Recommendation preferences include optional goals, detailed topics, place types, and preferred ways to help. They are saved in the existing member-scoped D1 settings record; older accounts receive empty defaults for new fields. Onboarding and My interests use the same choices. The volunteer matcher can explicitly load those saved choices for a temporary search. Listing categories remain stable.
+
 Profile details, interests and bookmarks are stored under the stable account ID and load after a later login, including from another device. Clearing cookies requires signing in again; it does not remove the account or saved data.
 
 ## Identity boundaries
