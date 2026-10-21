@@ -10,7 +10,7 @@ const fixture:Listing={id:'volunteer:trail',kind:'volunteer',title:'Volunteer tr
 const now=Date.parse('2026-10-21T19:00:00Z');
 test('local retrieval answers specific library and official-reporting questions with relevant sources',async()=>{
  const {db}=database(),{listings}=await communityCatalog(db);
- const books=retrieveAskKnowledge('Can the library deliver books to my home?',listings,'',now);assert.equal(books.status,'ready');assert.equal(books.sources[0].id,'official:pvld-books-mail');assert.ok(/mailed books/i.test(books.sources[0].text));
+ const books=retrieveAskKnowledge('Can the library deliver books to my home?',listings,'',now);assert.equal(books.status,'ready');assert.equal(books.sources[0].id,'official:pvld-books-mail');assert.ok(/mailed books/i.test(books.sources[0].text));assert.equal(books.sources.length,1,'A general library listing is not evidence of home delivery');
  const coyote=retrieveAskKnowledge('How do I report a coyote sighting in RPV?',listings,'',now);assert.equal(coyote.sources[0].id,'guide:coyote-report');assert.ok(coyote.sources[0].url.startsWith('https://survey123.arcgis.com/'));assert.ok(coyote.sources[0].text.includes('delayed'));
  const access=retrieveAskKnowledge('Where can I find wheelchair ramps?',listings,'',now);assert.ok(access.sources.some(s=>s.id==='guide:accessible-map'));assert.ok(access.sources.some(s=>/unknown|confirm|not live/i.test(s.text)));
 });
