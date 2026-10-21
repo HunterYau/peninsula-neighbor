@@ -32,7 +32,7 @@ export class LocalPVModel{
  async stream(messages:ModelTurn[],onToken:(token:string)=>void,signal:AbortSignal){
   if(!this.engine)throw Error('The local model is not ready.');
   const engine=this.engine;
-  const stream=await abortable(engine.chat.completions.create({messages,stream:true,max_tokens:200,temperature:0.2,top_p:0.8,extra_body:{enable_thinking:false}}),signal);
+  const stream=await abortable(engine.chat.completions.create({messages,stream:true,max_tokens:160,temperature:0,top_p:1,repetition_penalty:1.1,extra_body:{enable_thinking:false}}),signal);
   const iterator=stream[Symbol.asyncIterator]();
   for(;;){const next=await abortable(iterator.next(),signal);if(next.done)break;const token=next.value.choices[0]?.delta?.content;if(token)onToken(token);}
  }
