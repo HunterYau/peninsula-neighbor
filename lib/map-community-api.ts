@@ -31,7 +31,9 @@ export async function mapCommunityApi(req:Request,db:Database,user:Identity|null
  if(path[0]==='map-admin'){
   if(!admin)throw new CommunityError(403,'Administrator access required.');
   if(req.method==='GET'){
-   const reports=await all('SELECT id,kind,category,area,title,details,lat,lng,observed,status,note,created,reviewed,source_url AS sourceUrl FROM map_reports ORDER BY created DESC LIMIT 1000');
+   const reports=await all("SELECT id,kind,category,area,title,details,lat,lng,observed,status,note,created,reviewed,source_url AS sourceUrl FROM map_reports ORDER BY CASE WHEN status='pending' THEN 0 ELSE 1 END, created DESC LIMIT 1000");
+   // The moderation queue must not wait for OSM/city feeds or apply the public heat-map delay.
+   if(new URL(req.url).searchParams.get('view')==='reports')return json({reports});
    const sources=await readMapSources(db,false);
    return json({reports,problemCells:heatCells(reports.filter(r=>r.kind==='problem'&&r.status==='approved'),Date.now(),0),coverage:coverageScores((await communityCatalog(db)).listings,[...accessFeatures,...sources.accessible,...reports.filter(r=>r.kind==='accessibility'&&r.status==='approved'&&r.category!=='Access barrier').map(r=>({...r,body:r.details,lat:Number(r.lat),lng:Number(r.lng),url:r.sourceUrl,checked:r.observed,verification:'Community report'}))],emergencyFeatures),method:'Catalog coverage, not a population or equity measurement. 20 points for each category with at least one local record: events, mapped accessibility features, volunteering, emergency resources, and stated youth eligibility. Region-wide and unknown-location records are excluded. Missing records may reflect missing data. OSM neighborhood assignments use nearest-center estimates, not official city boundaries.'});
   }

@@ -6,7 +6,7 @@
 
 The current visual design is on **`codex/pv-civic-design`**, branched from `codex/pv-chatbot`. It retains the chatbot, accounts, maps, expanded interests, home recommendations, and forecast-matched weather icons. The presentation uses a coastal-blue and navy civic masthead, warm gold accents, regional photography, and a responsive navigation layout. The original `codex/pv-chatbot` appearance remains on its branch; `main` retains the earlier version.
 
-The civic appearance is inspired by regional municipal websites. Peninsula Neighbor remains an independent community project and does not claim government affiliation or use a city seal. Styling is isolated in `app/civic.css`; presentation markup and the original lighthouse illustration are the other visual changes. APIs, account authorization, database schema, map logic, recommendations, and AI behavior are unchanged.
+The civic appearance is inspired by regional municipal websites. Peninsula Neighbor remains an independent community project and does not claim government affiliation or use a city seal. Styling is isolated in `app/civic.css`; presentation markup and the original lighthouse illustration are the other visual changes. The civic design retains account authorization, database schema, map logic, recommendations, and AI behavior. The Administrator page also provides a central map-report queue, so pending coyote sightings can be reviewed without opening map analytics.
 
 ## Features
 
@@ -31,7 +31,7 @@ The civic appearance is inspired by regional municipal websites. Peninsula Neigh
 | Resident guide | 29 original guides based on city, library, and transit sources, with shareable pages, official links, check dates, and bookmarks |
 | Personal planner | Day suggestions, time/area/interest filters, itinerary ordering, reminders, and calendar/text export |
 | Optional rewards | Private participation and volunteer milestones, with distinct self-reported and verified achievements |
-| Administrator tools | Submission and affiliation review, private neighborhood problem patterns, and catalog resource coverage analysis |
+| Administrator tools | A central review queue for coyote sightings, accessibility/map reports, listings and affiliations; private neighborhood problem patterns and catalog coverage analysis |
 
 The interface supports desktop and mobile layouts, keyboard search (`⌘/Ctrl K`), labeled controls, larger text, and reduced motion. Local photographs and organizer imagery retain their source credits. Empty community areas stay empty until people contribute; the app does not seed invented users, reviews, or attendance.
 

@@ -46,3 +46,11 @@ Age, interests, area, Pacific days/time window and desired hours are used agains
 ## Storage and validation
 
 Schema changes are append-only migration `0005_tiresome_moira_mactaggert.sql`. Source caches retain their last successful timestamp, with explicit failure states. Endpoints validate JSON size, types, region bounds, report age, compatible categories, URLs, ownership, same-origin mutations, write limits, and administrator access. Tests cover moderation visibility, delayed/coarse aggregation, privacy, official-source field selection, real OSM parsing, wheelchair request/geometry/stairs handling, barrier proximity, volunteer matching, and coverage semantics.
+
+## Reviewing resident map reports
+
+The main `/admin` page includes **Coyote sightings & map reports**, before the other moderation queues. The same review controls remain available under Community map → Admin insights. Pending reports are available to the configured platform administrator immediately, including reports submitted moments ago by another account. The 24-hour delay applies only to public coyote heat-map summaries, based on both observation and submission time.
+
+Filter by status and report type, enter a note on the specific report, and choose Approve or Reject. Use All statuses to inspect earlier decisions or withdrawn reports. The queue reads the existing `map_reports` records through the administrator-only `/api/map-admin?view=reports` endpoint, bypassing external OSM/city requests and coverage calculations. Approval uses the existing authorization and decision endpoint. Precise coordinates and descriptions remain administrator-only except for the author’s own report view and approved accessibility descriptions.
+
+Opening the queue does not approve anything. A public coyote summary still requires approval and its normal time window/delay; community approval never files an official city report.

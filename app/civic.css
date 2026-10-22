@@ -246,6 +246,15 @@ input[type=checkbox],input[type=radio] { accent-color: #285b81; }
 .ask-website-actions { background: #edf4f8; border-color: #c3d6e4; border-radius: 3px; }
 .ask-website-actions>strong { color: #244e6b; }
 .ask-website-actions p { color: #526574; }
+.map-report-review { scroll-margin-top: 90px; }
+.map-review-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+.map-review-heading h2 { font-size: 22px; margin: 0 0 10px; }
+.map-review-heading p { font-size: 13px; line-height: 1.8; color: var(--muted); max-width: 700px; }
+.map-review-heading>.button { flex: none; }
+.map-report-queue .notice { display: block; margin-bottom: 20px; line-height: 1.8; }
+.map-report-queue .map-review-row h3 { font-size: 19px; margin-top: 14px; }
+.map-review-details { white-space: pre-wrap; overflow-wrap: anywhere; }
+.map-report-queue textarea { min-height: 100px; }
 
 @media(min-width:1041px) and (max-width:1190px) {
   .sidebar .nav-item { font-size: 12px; padding-inline: 11px; gap: 7px; }
@@ -296,4 +305,7 @@ input[type=checkbox],input[type=radio] { accent-color: #285b81; }
   .page-footer { font-size: 11px; line-height: 1.8; }
   .field input,.field select,.field textarea { font-size: 16px; }
   .hub-header h1,.page-intro h1 { font-size: 34px; }
+  .map-review-heading { flex-direction: column; gap: 14px; }
+  .map-review-heading>.button { width: 100%; justify-content: center; }
+  .map-report-queue select,.map-report-queue textarea { font-size: 16px; }
 }

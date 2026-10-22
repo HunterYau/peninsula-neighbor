@@ -11,6 +11,16 @@ const req=(path:string,method='GET',data?:unknown)=>new Request(`https://local.t
 const example=(kind='coyote')=>({kind,category:kind==='coyote'?'Passing through':kind==='problem'?'Broken sidewalk':'Curb ramp',area:'Palos Verdes Estates',title:'Public landmark report',details:'Private description for administrator review.',lat:33.801234,lng:-118.390123,observed:new Date(Date.now()-48*3600000).toISOString(),sourceUrl:''});
 function seedCache(sqlite:any){for(const id of ['osm-access-v1','official-coyotes-v1'])sqlite.prepare('INSERT INTO map_source_cache (id,data,checked) VALUES (?,?,?)').run(id,'[]',new Date().toISOString());}
 async function create(db:any,kind='coyote'){const r=await handleApi(req('map-reports','POST',example(kind)),db,alice,config);assert.equal(r.status,201);return (await r.json() as any).id;}
+test('administrator report queue shows a fresh coyote submission immediately without external feeds or public disclosure',async t=>{
+ const {db,sqlite}=database();const fetch=t.mock.method(globalThis,'fetch',async()=>{throw Error('The review queue must not fetch public map sources');});
+ const submitted=await handleApi(req('map-reports','POST',{...example(),observed:new Date().toISOString()}),db,alice,config);assert.equal(submitted.status,201);const {id}=await submitted.json() as any;
+ for(const [identity,status]of [[null,401],[bob,403],[{...admin,provider:'local'},403]] as const)assert.equal((await handleApi(req('map-admin?view=reports'),db,identity,config)).status,status);
+ const response=await handleApi(req('map-admin?view=reports'),db,admin,config);assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
+ const queue=await response.json() as any;assert.equal(queue.reports.length,1);assert.equal(queue.reports[0].id,id);assert.equal(queue.reports[0].status,'pending');assert.equal(queue.reports[0].details,example().details);assert.equal(Number(queue.reports[0].lat),example().lat);assert.equal(fetch.mock.calls.length,0);assert.equal('coverage' in queue,false);
+ assert.equal((await handleApi(req(`map-admin/${id}`,'PATCH',{status:'approved',note:'Source checked by administrator.'}),db,admin,config)).status,200);
+ const updated=await(await handleApi(req('map-admin?view=reports'),db,admin,config)).json() as any;assert.equal(updated.reports[0].status,'approved');
+ seedCache(sqlite);const publicData=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.deepEqual(publicData.coyotes,[],'Approval must not bypass the 24-hour public delay');assert.equal(fetch.mock.calls.length,0);
+});
 test('map report authorization, ownership, moderation, and exact-location privacy are enforced server-side',async()=>{
  const {db,sqlite}=database();seedCache(sqlite);assert.equal((await handleApi(req('map-reports','POST',example()),db,null,config)).status,401);
  const coyote=await create(db),access=await create(db,'accessibility'),problem=await create(db,'problem');
