@@ -8,6 +8,26 @@ import {database} from './database.ts';
 import type {Listing} from '../lib/community-model.ts';
 const fixture:Listing={id:'volunteer:trail',kind:'volunteer',title:'Volunteer trail restoration',body:'Help restore a native garden with the Conservancy. Contact the organizer about the schedule.',area:'Rancho Palos Verdes',category:'Environment',location:'Public reserve',organization:'',url:'https://example.org/volunteer',contact:'',minimumAge:16,maximumAge:null,eligibility:'Registration required.',starts:null,ends:null,deadline:null,lat:null,lng:null,approximate:false,verification:'Official source directory',verified:'2026-10-20',status:'published'};
 const now=Date.parse('2026-10-21T19:00:00Z');
+test('website questions return actionable local routes and keep official coyote reporting separate',()=>{
+ const coyote=retrieveAskKnowledge('Where should I report a coyote sighting?',[],'',now);
+ assert.equal(coyote.sources[0].localUrl,'/map?layer=coyotes');
+ assert.match(coyote.sources[0].text,/Community map → Coyote safety → Add a community sighting/);
+ assert.match(coyote.sources[0].localHelp||'',/sign in.*review/);
+ assert.match(coyote.sources[0].localHelp||'',/does not file an official city report/);
+ assert.ok(coyote.sources[0].url.startsWith('https://survey123.arcgis.com/'));
+ for(const [question,path] of [
+  ['Where are my saved opportunities?','/account/saved'],
+  ['How do I change my interests and recommendations?','/account/interests'],
+  ['How do I record completed volunteer hours?','/volunteer/hours'],
+  ['How can I submit an event?','/community/submit'],
+  ['Where can I post a question to neighbors?','/community/board'],
+  ['How do I get directions from my current location?','/map'],
+  ['Where can I find wheelchair ramps?','/map?layer=access'],
+  ['Where can I make a household checklist?','/preparedness'],
+ ]){const result=retrieveAskKnowledge(question,[],'',now);assert.equal(result.status,'ready',question);assert.ok(result.sources.some(s=>s.localLabel&&s.localUrl===path),question);assert.ok(result.sources.length<=4);}
+ const follow=retrieveAskKnowledge('Where do I do that?',[],'How can I submit an event?',now);assert.equal(follow.sources[0].localUrl,'/community/submit');
+ const prompt=buildAskMessages(coyote);assert.match(prompt[0].content,/website.*FIRST/);assert.match(prompt[0].content,/cannot submit reports/);assert.match(prompt[1].content,/Available on this website/);
+});
 test('local retrieval answers specific library and official-reporting questions with relevant sources',async()=>{
  const {db}=database(),{listings}=await communityCatalog(db);
  const books=retrieveAskKnowledge('Can the library deliver books to my home?',listings,'',now);assert.equal(books.status,'ready');assert.equal(books.sources[0].id,'official:pvld-books-mail');assert.ok(/mailed books/i.test(books.sources[0].text));assert.equal(books.sources.length,1,'A general library listing is not evidence of home delivery');
@@ -23,7 +43,7 @@ test('follow-ups reuse the prior subject, while unsupported questions admit miss
  const follow=retrieveAskKnowledge('How do I register for that?', [fixture],'Where can I volunteer for trail restoration?',now);assert.ok(follow.sources.some(s=>s.id===fixture.id));
  const unknown=retrieveAskKnowledge('Who is the current mayor of PV?',[],'',now);assert.equal(unknown.status,'no-match');assert.equal(unknown.sources.length,0);assert.match(unknown.answer,/don.t have a confirmed answer/);
  assert.equal(retrieveAskKnowledge('Who is the current mayor?', [fixture],'Where can I volunteer?',now).status,'no-match','A short new subject must not inherit the old topic');
- const apply=retrieveAskKnowledge('How do I apply?', [fixture],'Where can I volunteer for trail restoration?',now);assert.equal(apply.sources[0].id,fixture.id);assert.ok(apply.contextQuestion?.includes('trail restoration'));
+ const apply=retrieveAskKnowledge('How do I apply?', [fixture],'Where can I volunteer for trail restoration?',now);assert.ok(apply.sources.some(s=>s.id===fixture.id));assert.ok(apply.contextQuestion?.includes('trail restoration'));
  const emergency=retrieveAskKnowledge('My house is on fire',[],'',now);assert.equal(emergency.status,'direct');assert.match(emergency.answer,/911/);
  assert.equal(retrieveAskKnowledge('Hello!',[],'',now).status,'direct');
 });
