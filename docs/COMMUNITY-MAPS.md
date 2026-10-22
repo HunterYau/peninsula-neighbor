@@ -25,7 +25,7 @@ Current official reporting and map links were checked against [RPV](https://www.
 
 The adapter requests only IDs, observation/report dates and geometry, within explicit Peninsula bounds. It never fetches reporter contact data, address fields or comments. Only aggregate cells leave the server. Both observation and submission must be at least 24 hours old; only the preceding 30 days are included. Geometry is reduced to approximately 1 km cells, with pagination and numeric bounds checks. Cached summaries show the source-check time and can be older during an outage. City-system and website-community reports are shown separately to avoid implicit endorsement or double counting. Density indicates **reporting activity, not population or danger**. Empty areas are not an all-clear.
 
-Community coyote reports require sign-in and administrator review, plus the same time delay. The site never files a city report automatically. Official reporting links and [CDFW safety guidance](https://wildlife.ca.gov/HWC/Coyotes) remain prominent.
+Community coyote reports require sign-in and administrator review. Approved observations within the past 30 days appear immediately in approximate 1 km cells, with no submission-age or observation-age waiting period. The map defaults to Reviewed community reports, refreshes every 30 seconds while visible and when the window regains focus, and includes a Refresh coyote reports button. City-system ingestion retains its separate 24-hour delay. The site never files a city report automatically. Official reporting links and [CDFW safety guidance](https://wildlife.ca.gov/HWC/Coyotes) remain prominent.
 
 ## Emergency readiness
 
@@ -45,12 +45,12 @@ Age, interests, area, Pacific days/time window and desired hours are used agains
 
 ## Storage and validation
 
-Schema changes are append-only migration `0005_tiresome_moira_mactaggert.sql`. Source caches retain their last successful timestamp, with explicit failure states. Endpoints validate JSON size, types, region bounds, report age, compatible categories, URLs, ownership, same-origin mutations, write limits, and administrator access. Tests cover moderation visibility, delayed/coarse aggregation, privacy, official-source field selection, real OSM parsing, wheelchair request/geometry/stairs handling, barrier proximity, volunteer matching, and coverage semantics.
+Schema changes are append-only migration `0005_tiresome_moira_mactaggert.sql`. Source caches retain their last successful timestamp, with explicit failure states. Endpoints validate JSON size, types, region bounds, report age, compatible categories, URLs, ownership, same-origin mutations, write limits, and administrator access. Tests cover moderation visibility, immediate approved community aggregation, delayed/coarse city aggregation, privacy, official-source field selection, real OSM parsing, wheelchair request/geometry/stairs handling, barrier proximity, volunteer matching, and coverage semantics.
 
 ## Reviewing resident map reports
 
-The main `/admin` page includes **Coyote sightings & map reports**, before the other moderation queues. The same review controls remain available under Community map → Admin insights. Pending reports are available to the configured platform administrator immediately, including reports submitted moments ago by another account. The 24-hour delay applies only to public coyote heat-map summaries, based on both observation and submission time.
+The main `/admin` page includes **Coyote sightings & map reports**, before the other moderation queues. The same review controls remain available under Community map → Admin insights. Pending reports are available to the configured platform administrator immediately, including reports submitted moments ago by another account. Website sightings appear on the public map immediately after approval. The 24-hour delay applies only to the separate city-system summaries, based on both observation and submission time.
 
 Filter by status and report type, enter a note on the specific report, and choose Approve or Reject. Use All statuses to inspect earlier decisions or withdrawn reports. The queue reads the existing `map_reports` records through the administrator-only `/api/map-admin?view=reports` endpoint, bypassing external OSM/city requests and coverage calculations. Approval uses the existing authorization and decision endpoint. Precise coordinates and descriptions remain administrator-only except for the author’s own report view and approved accessibility descriptions.
 
-Opening the queue does not approve anything. A public coyote summary still requires approval and its normal time window/delay; community approval never files an official city report.
+Opening the queue does not approve anything. A public coyote summary still requires approval and an observation within the past 30 days; community approval never files an official city report.

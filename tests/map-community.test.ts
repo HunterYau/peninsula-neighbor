@@ -17,9 +17,11 @@ test('administrator report queue shows a fresh coyote submission immediately wit
  for(const [identity,status]of [[null,401],[bob,403],[{...admin,provider:'local'},403]] as const)assert.equal((await handleApi(req('map-admin?view=reports'),db,identity,config)).status,status);
  const response=await handleApi(req('map-admin?view=reports'),db,admin,config);assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
  const queue=await response.json() as any;assert.equal(queue.reports.length,1);assert.equal(queue.reports[0].id,id);assert.equal(queue.reports[0].status,'pending');assert.equal(queue.reports[0].details,example().details);assert.equal(Number(queue.reports[0].lat),example().lat);assert.equal(fetch.mock.calls.length,0);assert.equal('coverage' in queue,false);
+ seedCache(sqlite);const pendingPublic=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.deepEqual(pendingPublic.coyotes,[],'Fresh pending reports must remain private');
  assert.equal((await handleApi(req(`map-admin/${id}`,'PATCH',{status:'approved',note:'Source checked by administrator.'}),db,admin,config)).status,200);
  const updated=await(await handleApi(req('map-admin?view=reports'),db,admin,config)).json() as any;assert.equal(updated.reports[0].status,'approved');
- seedCache(sqlite);const publicData=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.deepEqual(publicData.coyotes,[],'Approval must not bypass the 24-hour public delay');assert.equal(fetch.mock.calls.length,0);
+ const publicData=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.equal(publicData.coyotes[0].count,1,'A sighting submitted and observed moments ago must appear immediately after approval');assert.deepEqual(Object.keys(publicData.coyotes[0]).sort(),['count','id','lat','lng']);assert.notEqual(publicData.coyotes[0].lat,example().lat);assert.equal(publicData.delayHours,0);assert.equal(publicData.officialDelayHours,24);assert.equal(fetch.mock.calls.length,0);
+ assert.equal((await handleApi(req(`map-admin/${id}`,'PATCH',{status:'rejected',note:'Remove reviewed report.'}),db,admin,config)).status,200);assert.deepEqual((await(await handleApi(req('map-data'),db,null,config)).json() as any).coyotes,[],'Unpublishing removes the sighting immediately');
 });
 test('map report authorization, ownership, moderation, and exact-location privacy are enforced server-side',async()=>{
  const {db,sqlite}=database();seedCache(sqlite);assert.equal((await handleApi(req('map-reports','POST',example()),db,null,config)).status,401);
@@ -30,9 +32,7 @@ test('map report authorization, ownership, moderation, and exact-location privac
  assert.equal(((await (await handleApi(req('map-reports'),db,bob,config)).json()) as any).reports.length,0);
  let publicData=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.deepEqual(publicData.coyotes,[]);assert.equal(publicData.accessible.some((p:any)=>p.id===`access:${access}`),false);
  for(const id of [coyote,access,problem])assert.equal((await handleApi(req(`map-admin/${id}`,'PATCH',{status:'approved',note:'Source checked; community observation only.'}),db,admin,config)).status,200);
- // Old observation with a newly-created report must still wait 24 hours.
- publicData=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.equal(publicData.coyotes.length,0);
- sqlite.prepare('UPDATE map_reports SET created=? WHERE id=?').run(new Date(Date.now()-48*3600000).toISOString(),coyote);
+ // A newly submitted older observation also appears immediately after approval.
  publicData=await(await handleApi(req('map-data'),db,null,config)).json() as any;assert.equal(publicData.coyotes[0].count,1);assert.notEqual(publicData.coyotes[0].lat,example().lat);assert.deepEqual(Object.keys(publicData.coyotes[0]).sort(),['count','id','lat','lng']);assert.equal(JSON.stringify(publicData).includes(example().details),true,'Reviewed access description is public');assert.equal(JSON.stringify(publicData.coyotes).includes('Private'),false);
  assert.equal(publicData.accessible.some((p:any)=>p.id===`access:${problem}`),false);
  const dash=await(await handleApi(req('map-admin'),db,admin,config)).json() as any;assert.equal(dash.reports.length,3);assert.equal(dash.problemCells.length,1);assert.equal(dash.coverage.length,5);
@@ -42,9 +42,10 @@ test('map report validation rejects incompatible categories, unsafe links, coord
  assert.equal(mapReportSchema.safeParse({...example(),category:'Broken sidewalk'}).success,false);assert.equal(mapReportSchema.safeParse({...example(),sourceUrl:'javascript:alert(1)'}).success,false);assert.equal(mapReportSchema.safeParse({...example(),lat:35}).success,false);
  const {db}=database();assert.equal((await handleApi(req('map-reports','POST',{...example(),observed:new Date(Date.now()+86400000).toISOString()}),db,alice,config)).status,400);
 });
-test('heat summaries exclude recent, future, rejected, and expired reports without exposing details',()=>{
+test('city heat summaries delay recent reports; community summaries include them while excluding future, pending, rejected and expired reports',()=>{
  const now=Date.now(),base={lat:33.801234,lng:-118.390123,observed:new Date(now-48*3600000).toISOString(),status:'approved'};
  const cells=heatCells([base,{...base,observed:new Date(now-3600000).toISOString()},{...base,status:'pending'},{...base,observed:new Date(now-31*86400000).toISOString()},{...base,created:new Date(now).toISOString()}],now);assert.equal(cells.length,1);assert.equal(cells[0].count,1);assert.notEqual(cells[0].lng,base.lng);
+ const community=heatCells([base,{...base,observed:new Date(now).toISOString(),created:new Date(now).toISOString()},{...base,observed:new Date(now+60000).toISOString()},{...base,status:'pending'},{...base,status:'rejected'},{...base,status:'withdrawn'},{...base,observed:new Date(now-31*86400000).toISOString()}],now,0);assert.equal(community.length,1);assert.equal(community[0].count,2);
 });
 test('OSM access ingestion accepts only bounded real nodes and preserves source tags as unverified data',()=>{
  const nodes=parseAccessNodes({elements:[{type:'node',id:5302825045,lat:33.800393,lon:-118.3904226,tags:{kerb:'lowered',wheelchair:'yes',tactile_paving:'no'}},{type:'node',id:1,lat:50,lon:0,tags:{kerb:'lowered'}},{type:'node',id:2,lat:33.8,lon:-118.39,tags:{wheelchair:'no'}}]},'2026-10-19');assert.equal(nodes.length,1);assert.equal(nodes[0].access?.tactile_paving,'no');assert.match(nodes[0].verification,/not field verified/);assert.equal(nodes[0].url,'https://www.openstreetmap.org/node/5302825045');assert.throws(()=>parseAccessNodes({remark:'timeout',elements:[]},''),/complete/);

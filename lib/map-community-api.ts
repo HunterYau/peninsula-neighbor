@@ -16,7 +16,7 @@ export async function mapCommunityApi(req:Request,db:Database,user:Identity|null
   const community=rows.map(r=>({id:`access:${r.id}`,title:r.title,body:r.details,area:r.area,category:r.category,lat:Number(r.lat),lng:Number(r.lng),url:r.source_url,checked:r.observed,verification:'Community report · administrator reviewed; not an access certification'}));
   const coyotes=await all("SELECT lat,lng,observed,status,created FROM map_reports WHERE kind='coyote' AND status='approved' AND observed>=?",new Date(Date.now()-30*86400000).toISOString());
   const sources=await readMapSources(db,new URL(req.url).searchParams.get('refresh')==='1');
-  return json({accessible:[...accessFeatures,...community,...sources.accessible],emergency:emergencyFeatures,coyotes:heatCells(coyotes),officialCoyotes:sources.officialCoyotes,sourceStatus:sources.status,sources:mapSources,delayHours:24,windowDays:30,checked:now});
+  return json({accessible:[...accessFeatures,...community,...sources.accessible],emergency:emergencyFeatures,coyotes:heatCells(coyotes,Date.now(),0),officialCoyotes:sources.officialCoyotes,sourceStatus:sources.status,sources:mapSources,delayHours:0,officialDelayHours:24,windowDays:30,checked:now});
  }
  if(!user)throw new CommunityError(401,'Sign in to submit or manage map reports.');
  if(path[0]==='map-reports'){
@@ -32,7 +32,7 @@ export async function mapCommunityApi(req:Request,db:Database,user:Identity|null
   if(!admin)throw new CommunityError(403,'Administrator access required.');
   if(req.method==='GET'){
    const reports=await all("SELECT id,kind,category,area,title,details,lat,lng,observed,status,note,created,reviewed,source_url AS sourceUrl FROM map_reports ORDER BY CASE WHEN status='pending' THEN 0 ELSE 1 END, created DESC LIMIT 1000");
-   // The moderation queue must not wait for OSM/city feeds or apply the public heat-map delay.
+   // The moderation queue must not wait for OSM/city feeds or filter out pending or newly submitted reports.
    if(new URL(req.url).searchParams.get('view')==='reports')return json({reports});
    const sources=await readMapSources(db,false);
    return json({reports,problemCells:heatCells(reports.filter(r=>r.kind==='problem'&&r.status==='approved'),Date.now(),0),coverage:coverageScores((await communityCatalog(db)).listings,[...accessFeatures,...sources.accessible,...reports.filter(r=>r.kind==='accessibility'&&r.status==='approved'&&r.category!=='Access barrier').map(r=>({...r,body:r.details,lat:Number(r.lat),lng:Number(r.lng),url:r.sourceUrl,checked:r.observed,verification:'Community report'}))],emergencyFeatures),method:'Catalog coverage, not a population or equity measurement. 20 points for each category with at least one local record: events, mapped accessibility features, volunteering, emergency resources, and stated youth eligibility. Region-wide and unknown-location records are excluded. Missing records may reflect missing data. OSM neighborhood assignments use nearest-center estimates, not official city boundaries.'});

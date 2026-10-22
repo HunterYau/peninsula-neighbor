@@ -16,7 +16,7 @@ The civic appearance is inspired by regional municipal websites. Peninsula Neigh
 | Smart search | Search events, volunteering, businesses, places, and resources; filter by location, distance, date, category, and participant age |
 | Community map | Pan, zoom, clustered pins, place details, bookmarks, starting-point selection, route lines, turn instructions, distance, travel time, arrival estimates, and Google Maps links |
 | Accessible route finder | Mapped ramps and entrances, wheelchair-aware route planning, optional ramp waypoints, and community access-barrier reports |
-| Coyote safety | Separate city and reviewed community report summaries, delayed approximate cells, safety guidance, and links to official reporting |
+| Coyote safety | Separate city and reviewed community report summaries, approximate cells (website reports appear immediately after approval), safety guidance, and links to official reporting |
 | Emergency readiness | Official resource locations, evacuation information links, household preparedness checklists, and downloadable plans |
 | Ask PV | Free on-device AI with streamed answers, local sources, follow-ups, website guidance, Stop/Clear controls, and a source-only mode |
 | Personalized recommendations | Match interests, goals, preferred places, ways to help, neighborhood, optional age, and availability; explain each match |
@@ -55,7 +55,7 @@ Nearest sorting uses labeled straight-line distance. On-demand routes use FOSSGI
 
 The home weather card and five-day outlook use the same forecast descriptions to choose their images: clear skies, clouds, rain/showers, thunderstorms, fog, and snow receive matching icons. Loading and unavailable data use neutral symbols. Weather comes from Open-Meteo with National Weather Service hourly/daily forecasts as backup; NWS alerts load separately. Sources and forecast times are shown in Pacific time. Failed refreshes may retain a clearly marked forecast for up to an hour; an alert-feed failure is never shown as “no alerts.” Weather is a PVE-area forecast, not a measurement at the visitor’s position.
 
-Coyote reports require care: community submissions need administrator review, and public summaries use a 24-hour delay and roughly 1 km cells. A site report **does not file an official city report**. Map cells show reporting activity, not coyote population or whether a route is safe. Emergency maps and checklists do not provide live evacuation, road, or shelter status.
+Coyote reports require care: community submissions need administrator review and appear immediately after approval in roughly 1 km cells. City-system summaries retain a separate 24-hour delay. A site report **does not file an official city report**. Map cells show reporting activity, not coyote population or whether a route is safe. Emergency maps and checklists do not provide live evacuation, road, or shelter status.
 
 See [routing and location](docs/ROUTING.md) and [community map sources and limitations](docs/COMMUNITY-MAPS.md).
 
