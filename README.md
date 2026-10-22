@@ -73,13 +73,15 @@ New listing submissions, community events, sightings, map reports, and organizat
 
 Approved organization representatives can confirm other volunteers’ hours for their organization. That confirmation is recorded separately from self-reported hours and does not guarantee school credit. Operators retain database administration access; application privacy controls do not hide records from the database operator.
 
+Administrator status filters retain earlier decisions and report review notes. See [current functional audit evidence](docs/FUNCTIONAL-AUDIT.md).
+
 See [account storage and recovery](docs/ACCOUNTS.md) and [community workflows and authorization](docs/COMMUNITY-FEATURES.md).
 
 ## Event discovery and information quality
 
 The shared discovery feed stores allowlisted organizer calendars and evidence-checked public announcements, alongside reviewed community contributions. Listings retain source URLs, actual check times, eligibility and registration details when known, and stale/cancelled labels. Passed events and deadlines are excluded from current recommendations and Ask PV retrieval.
 
-**Deployment status reviewed October 21, 2026:** the linked daily discovery task is paused. Existing imported listings remain available according to their dates and freshness. Reloading the feed does not trigger a new internet search. The updater was designed for owner-private Sites authorization; review that authorization before enabling unattended updates on a public Site. Do not assume automatic daily crawling is active.
+**Deployment status reviewed October 22, 2026:** the linked daily discovery task remains paused. Administrators can use **Administrator → Refresh official calendars** to import the three configured calendar feeds and refresh bounded organizer-image checks. This writer now requires the configured platform administrator and a same-origin request; a caller-supplied writer header or Site service access alone is insufficient. Supplemental imports enforce the same identity boundary. Reloading the public feed only rereads saved data. Unattended updates need separately configured and verified service authorization before the task can resume.
 
 Coverage is limited to accessible public sources. Private groups and private parties are not monitored, and undisclosed schedules, coordinates, age rules, and current hazard conditions are not invented. Community reports and administrator review are distinguished from official information. See [the discovery contract](docs/DISCOVERY.md) and [local sources](docs/SOURCES.md).
 
@@ -105,6 +107,9 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0005_tiresome_moira_mactaggert.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0006_green_adam_warlock.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0007_needy_grey_gargoyle.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0008_busy_turbo.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0009_cloudy_gamma_corps.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0010_smart_silverclaw.sql
 npm run dev -- --hostname 127.0.0.1
 ```
 
@@ -119,7 +124,7 @@ npm test        # Core logic and database/API behavior
 npm run build  # Client, server, and Worker output
 ```
 
-GitHub Actions runs these checks on pushes to `main`, `codex/peninsula-redesign`, and `codex/pv-chatbot`, and on pull requests. Browser checks are still needed for GPU inference, real token streaming, responsive layouts, and interactive map behavior.
+GitHub Actions runs these checks on pushes to `main`, `codex/peninsula-redesign`, and `codex/pv-chatbot`, and `codex/pv-civic-design`, and on pull requests. Browser checks are still needed for GPU inference, real token streaming, responsive layouts, and interactive map behavior.
 
 ## Architecture and deployment
 

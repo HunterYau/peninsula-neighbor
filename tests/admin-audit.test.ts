@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {handleApi} from '../lib/api.ts';
+import {database} from './database.ts';
+import {mapLayerFromQuery,signInUrl,signOutUrl,safeReturnPath} from '../lib/navigation.ts';
+const alice={userId:'alice',fullName:'Alice'},bob={userId:'bob',fullName:'Bob'},admin={userId:'admin',fullName:'Admin',email:'owner@local.test'},config={adminEmail:admin.email};
+const req=(path:string,method='GET',data?:unknown)=>new Request(`https://local.test/api/${path}`,{method,headers:{Origin:'https://local.test','Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});
+const api=(db:any,path:string,method='GET',data?:unknown,user:any=admin)=>handleApi(req(path,method,data),db,user,config);
+test('content reports preserve their review note, date and reviewer and stay inspectable privately after review',async()=>{
+ const {db,sqlite}=database();const p=await(await api(db,'posts','POST',{type:'Offer help',title:'A public discussion',body:'Reported public content for administrator review.',area:'Palos Verdes Estates',topic:'General',days:7},alice)).json() as any;
+ assert.equal((await api(db,'reports','POST',{kind:'post',target:p.id,reason:'A detailed report for review.'},bob)).status,200);
+ const pending=await(await api(db,'admin')).json() as any;assert.equal(pending.reports.length,1);const report=pending.reports[0];assert.equal(report.title,'A public discussion');assert.equal(report.body,'Reported public content for administrator review.');assert.equal(report.reason,'A detailed report for review.');
+ const note='Checked the original discussion and recorded the outcome.';assert.equal((await api(db,`admin/reports/${report.id}`,'PATCH',{status:'approved',note},bob)).status,403);assert.equal((await api(db,`admin/reports/${report.id}`,'PATCH',{status:'approved',note})).status,200);
+ assert.deepEqual((await(await api(db,'admin')).json() as any).reports,[]);const history=(await(await api(db,'admin?status=reviewed')).json() as any).reports;assert.equal(history.length,1);assert.equal(history[0].note,note);assert.ok(history[0].reviewed);assert.equal(sqlite.prepare('SELECT reviewer FROM reports WHERE id=?').get(report.id)?.reviewer,'admin');
+ assert.equal((await api(db,'admin?status=all','GET',undefined,bob)).status,403);assert.equal((await api(db,'admin?status=all','GET',undefined,null)).status,401);assert.equal((await api(db,'admin?status=invalid')).status,400);assert.equal((await api(db,'admin/reports/missing','PATCH',{status:'approved',note})).status,404);
+ assert.equal(JSON.stringify(await(await api(db,'posts','GET',undefined,null)).json()).includes(note),false);
+ sqlite.prepare('DELETE FROM posts WHERE id=?').run(p.id);const missing=(await(await api(db,'admin?status=reviewed')).json() as any).reports[0];assert.equal(missing.title,'Reported post');assert.equal(missing.body,'The reported content is no longer available.');
+ sqlite.prepare('DELETE FROM profiles WHERE id=?').run('admin');assert.equal(sqlite.prepare('SELECT note,reviewer FROM reports WHERE id=?').get(report.id)?.reviewer,null);assert.equal(sqlite.prepare('SELECT note FROM reports WHERE id=?').get(report.id)?.note,note);
+});
+test('rejected listings and approved sightings remain available to administrator status filters for later decisions',async()=>{
+ const {db}=database();const item=await(await api(db,'submissions','POST',{kind:'resource',title:'Useful public resource',body:'A source-linked resource to review.',area:'Palos Verdes Estates',category:'Support',location:'Public library',url:'https://example.org/'},alice)).json() as any;
+ const decide=(path:string,status:string)=>api(db,path,'PATCH',{status,note:'Checked the original public source.'});await decide(`admin/submissions/${item.id}`,'rejected');assert.equal((await(await api(db,'admin')).json() as any).submissions.length,0);assert.equal((await(await api(db,'admin?status=rejected')).json() as any).submissions[0].id,item.id);await decide(`admin/submissions/${item.id}`,'approved');assert.equal((await(await api(db,'catalog','GET',undefined,null)).json() as any).listings.some((l:any)=>l.id===`listing:${item.id}`),true);
+ const sighting=await(await api(db,'sightings','POST',{title:'A temporary public stand',body:'A public observation for review.',area:'Palos Verdes Estates',location:'Public landmark',hours:1},alice)).json() as any;await decide(`admin/sightings/${sighting.id}`,'approved');assert.equal((await(await api(db,'admin')).json() as any).sightings.some((s:any)=>s.id===sighting.id),true);await decide(`admin/sightings/${sighting.id}`,'rejected');assert.equal((await(await api(db,'sightings','GET',undefined,bob)).json() as any).sightings.some((s:any)=>s.id===sighting.id),false);
+});
+test('administrator map deep links and inbox sign-in retain their canonical destinations',()=>{
+ for(const layer of ['explore','access','coyotes','emergency','report','insights'])assert.equal(mapLayerFromQuery(new URLSearchParams(`layer=${layer}`)),layer);assert.equal(mapLayerFromQuery(new URLSearchParams('layer=unknown')),'explore');const signin=new URL(signInUrl('/account/inbox'),'https://local.test');assert.equal(signin.pathname,'/sign-in');assert.equal(safeReturnPath(signin.searchParams.get('next')),'/account/inbox');
+});
+
+test('switching accounts preserves the requested destination through platform sign-out',()=>{const out=new URL(signOutUrl('/volunteer/hours'),'https://local.test'),login=new URL(out.searchParams.get('return_to')!,'https://local.test');assert.equal(login.pathname,'/sign-in');assert.equal(login.searchParams.get('next'),'/volunteer/hours');const unsafe=new URL(new URL(signOutUrl('https://evil.test'),'https://local.test').searchParams.get('return_to')!,'https://local.test');assert.equal(unsafe.searchParams.get('next'),'/account');});

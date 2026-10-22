@@ -1,3 +1,5 @@
+> Historical verification notes. For the current public-site authorization boundary, fixes and coverage, see [Functional audit](FUNCTIONAL-AUDIT.md). Earlier owner-private scheduling statements below describe their original deployment only.
+
 # Version 2 verification
 
 Work performed October 17–18, 2026. This file is updated as gates finish; it is not a claim that an untested feature is verified.

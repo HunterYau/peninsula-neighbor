@@ -46,3 +46,5 @@
 @media(prefers-reduced-motion:reduce){.ask-examples>button{transition:none}.ask-examples>button:hover{transform:none}}
 
 .ask-workspace .ask-history-search input,.ask-workspace .ask-history-search input:focus-visible{padding:0!important;border:0!important;border-radius:0;background:transparent!important;outline:none!important;box-shadow:none!important;min-height:22px}
+
+.ask-workspace .ask-source .ask-source-excerpt{font-size:12px;line-height:1.75;color:#3b5a70;white-space:pre-wrap}

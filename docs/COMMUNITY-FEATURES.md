@@ -1,6 +1,6 @@
 # Integrated community features
 
-The existing React/Vinext, D1, ChatGPT sign-in, Leaflet/OpenStreetMap, and custom CSS remain in use. No dependency, paid API, new account service, geocoder, or AI API is required by this update. The existing daily discovery task and all existing views remain available.
+The existing React/Vinext, D1, ChatGPT sign-in, Leaflet/OpenStreetMap, and custom CSS remain in use. No dependency, paid API, new account service, geocoder, or AI API is required by this update. Existing views remain available. The daily discovery task is paused; authorized administrators can refresh the configured public calendars manually.
 
 ## Where to find things
 
@@ -30,7 +30,7 @@ The local-only Seedy development identity receives administrator access only whe
 
 New community submissions are stored privately as pending. Only an administrator can approve them; authors can withdraw their own submissions, including after publication. Approved submissions appear in the unified catalog, relevant existing views, and organization pages. Approval dates are labeled **administrator-reviewed community listing**, not official endorsement. New direct member events and sightings also enter review. Only their author can see a pending/rejected direct event or sighting; RSVPs require approval. Events and sightings that existed before this change are retained as legacy community information. Discussions continue publishing immediately as before.
 
-Official curated resources and daily organizer-feed entries remain separate from reviewed community submissions. Dates refer to the actual directory review, source check, or administrative decision. Missing ages, eligibility details, registration deadlines, and coordinates remain unknown. No demonstration listings or fake account activity are seeded in production.
+Official curated resources and imported organizer-feed entries remain separate from reviewed community submissions. Dates refer to the actual directory review, source check, or administrative decision. Missing ages, eligibility details, registration deadlines, and coordinates remain unknown. No demonstration listings or fake account activity are seeded in production.
 
 ## Search, recommendations, and saved items
 

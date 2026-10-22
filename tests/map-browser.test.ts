@@ -8,7 +8,8 @@ const options:MapFilter={q:'',kind:'all',category:'All categories',area:'All are
 test('opening status uses Pacific time, exact closing boundaries, district holidays, and unknown states',()=>{
  assert.equal(hoursStatus(base.id,now).open,true);
  assert.equal(hoursStatus(base.id,new Date('2026-10-20T01:00:00Z')).open,false,'6 PM Pacific is closed');
- assert.equal(hoursStatus(base.id,new Date('2026-10-18T18:00:00Z')).open,false,'Sunday is closed');
+ assert.equal(hoursStatus(base.id,new Date('2026-10-20T01:00:00Z')).label,'Closed now');
+ assert.equal(hoursStatus(base.id,new Date('2026-10-18T18:00:00Z')).label,'Closed today','Sunday has no opening intervals');
  assert.equal(hoursStatus(base.id,new Date('2026-11-11T20:00:00Z')).label,'Closed · district holiday');
  assert.equal(hoursStatus(base.id,new Date('2027-07-05T18:00:00Z')).open,false,'Sunday holiday is also observed Monday');
  assert.equal(hoursStatus('not-published',now).open,null);

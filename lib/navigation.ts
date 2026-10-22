@@ -6,6 +6,10 @@ export function pageQuery(){return new URLSearchParams(typeof window==='undefine
 export function legacyDestination(hash:string){const [key,query]=hash.replace(/^#/,'').split('?');if(!Object.hasOwn(viewPaths,key))return null;return `${viewPaths[key as View]}${query?'?'+query:''}`;}
 export function safeReturnPath(value:unknown,fallback='/account'){if(typeof value!=='string'||value.length>1600||!value.startsWith('/')||value.startsWith('//')||/[\\\u0000-\u001f]/.test(value))return fallback;try{const url=new URL(value,'https://peninsula.local');if(url.origin!=='https://peninsula.local'||/^\/(signin-with-chatgpt|signout-with-chatgpt|callback|sign-in|welcome)(\/|$)/.test(url.pathname))return fallback;return url.pathname+url.search+url.hash;}catch{return fallback;}}
 export function signInUrl(next='/account'){return `/sign-in?next=${encodeURIComponent(safeReturnPath(next))}`;}
+export function signOutUrl(next?:string){return `/signout-with-chatgpt?return_to=${encodeURIComponent(next?signInUrl(next):'/sign-in')}`;}
 export function hostedSignInUrl(next='/account'){return `/signin-with-chatgpt?return_to=${encodeURIComponent(`/welcome?next=${encodeURIComponent(safeReturnPath(next))}`)}`;}
 export const sectionViews:Record<string,View[]>={discover:['discover','find','explore','events','guides'],connect:['connect','community','volunteer','match','hours','organizations','contribute'],account:['account','saved','planner','inbox','activity'],resources:['resources','services']};
 export function parentView(view:View):View{for(const [parent,children]of Object.entries(sectionViews))if(children.includes(view))return parent as View;return view;}
+
+export type MapLayer='explore'|'access'|'coyotes'|'emergency'|'report'|'insights';
+export function mapLayerFromQuery(params:URLSearchParams):MapLayer{const value=params.get('layer');return ['access','coyotes','emergency','report','insights'].includes(value||'')?value as MapLayer:'explore';}

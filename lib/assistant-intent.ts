@@ -5,10 +5,12 @@ export function assistantIntent(question:string){
  const q=question.toLowerCase(),negative=/\b(don['’]?t|do not|never|without|not yet|only suggest|just suggest)\b/.test(q);
  const hosting=!/\b(private|personal)\b/.test(q)&&/\b(publish|submit|public|community event|community gathering|community activity|listing)\b/.test(q)&&/\b(events?|volunteer|volunteering|opportunity|listing|gathering|activity|party)\b/.test(q);
  const custom=/\b(my own|custom|personal event|private event|event called|event named|titled|birthday|appointment)\b/.test(q);
- const bookmark=!negative&&/\b(save|bookmark|favorite|favourite)\b/.test(q)&&!/^\s*(how|where|what does|can the website)\b/.test(q);
- const plan=!negative&&(/\b(add|put|schedule|book|create|make|plan)\b/.test(q)&&/\b(planner|calendar|plan|outing|event|activity|something|volunteer|volunteering|fun|party|appointment|it|that|one|them)\b/.test(q))&&!/^\s*(how|where|what does|can the website)\b/.test(q);
+ const capability=/^\s*(how|where|what does|can the website|can i|could i|do i|is it possible)\b/.test(q);
+ const avoidsVolunteering=/\b(not|no|without|avoid|skip)\s+(?:any\s+)?volunteer(?:ing)?\b|\b(don['’]?t|do not)\s+want\s+(?:to\s+)?volunteer(?:ing)?\b/.test(q);
+ const bookmark=!negative&&/\b(save|bookmark|favorite|favourite)\b/.test(q)&&!capability;
+ const plan=!negative&&(/\b(add|put|schedule|book|create|make|plan)\b/.test(q)&&/\b(planner|calendar|plan|outing|event|activity|something|volunteer|volunteering|fun|party|appointment|it|that|one|them)\b/.test(q))&&!capability;
  const personal=/\b(recommend|suggest|based on my|my interests|my preferences|what should i do|something fun|something to do|plan my|find me|for me|matches? my)\b/.test(q);
- return {handled:hosting||bookmark||plan||personal,hosting,custom,bookmark,plan:plan&&!hosting,volunteer:/\b(volunteer|volunteering|service hours|give back|help (?:out |my |the )?community)\b/.test(q)&&!/\b(not|no|without) volunteering\b/.test(q),fun:/\b(fun|outing|hang out|entertainment|recreation|things to do|places? to (?:visit|go))\b/.test(q),negative};
+ return {handled:hosting||bookmark||plan||personal,hosting,custom,bookmark,plan:plan&&!hosting,volunteer:/\b(volunteer|volunteering|service hours|give back|help (?:out |my |the )?community)\b/.test(q)&&!avoidsVolunteering,fun:/\b(fun|outing|hang out|entertainment|recreation|things to do|places? to (?:visit|go))\b/.test(q),negative};
 }
 export function inferredSettings(question:string,saved:MemberSettings):{settings:MemberSettings;explicit:Personalization}{
  const q=question.toLowerCase().replace(/\b(?:don't|do not|not interested in|avoid)\b[^,.!?;]*/g,'');
@@ -36,8 +38,8 @@ export function rankedPicks(items:Listing[],question:string,saved:MemberSettings
  return recommend(eligible,settings,now).slice(0,4);
 }
 export function referenceSelection(question:string,ids:string[],items:Listing[]):string[]|null{
- const q=question.toLowerCase();if(!ids.length)return /\b(it|that|this|one|them|first|second|third|fourth|last|both|all)\b/.test(q)?[]:null;if(/\b(all|both|each|them)\b/.test(q))return ids;
- const ordinals=[/\b(first|1st|number 1|option 1)\b/,/\b(second|2nd|number 2|option 2)\b/,/\b(third|3rd|number 3|option 3)\b/,/\b(fourth|4th|number 4|option 4)\b/];const n=ordinals.findIndex(r=>r.test(q));if(n>=0)return ids[n]?[ids[n]]:[];
+ const q=question.toLowerCase();if(!ids.length)return /\b(it|that|this|one|them|first|second|third|fourth|last|both|all)\b/.test(q)?[]:null;if(/\bboth\b/.test(q))return ids.length===2?ids:[];if(/\b(all|each|them)\b/.test(q))return ids;
+ const ordinals=[/\b(first|1st|number 1|option 1)\b/,/\b(second|2nd|number 2|option 2)\b/,/\b(third|3rd|number 3|option 3)\b/,/\b(fourth|4th|number 4|option 4)\b/];const selected=ordinals.flatMap((r,i)=>r.test(q)?[i]:[]);if(selected.length)return selected.every(i=>!!ids[i])?selected.map(i=>ids[i]):[];
  if(/\blast\b/.test(q))return [ids.at(-1)!];const exact=items.filter(i=>ids.includes(i.id)&&q.includes(i.title.toLowerCase()));if(exact.length)return exact.map(i=>i.id);
  if(/\b(it|that|this|one)\b/.test(q))return ids.length===1?ids:[];return null;
 }
@@ -47,4 +49,4 @@ export function namedListings(question:string,items:Listing[]){
  const stop=new Set('save bookmark favorite favourite add put create make event activity opportunity plan calendar planner to my the a an it that this one for me can you please and of with based interests recommend suggest something fun volunteering volunteer'.split(' ')),words=clean(question).filter(w=>!stop.has(w));
  return items.filter(i=>{const title=clean(i.title),matches=words.filter(w=>title.includes(w));return question.toLowerCase().includes(i.title.toLowerCase())||matches.length>=2||matches.some(w=>w.length>=6&&items.filter(v=>clean(v.title).includes(w)).length===1);});
 }
-export function allowsAutomaticChoice(question:string){return /\b(interests?|preferences|recommend|suggest|something|for me|best (?:match|option))\b/i.test(question)||/^\s*(?:can you |please )?(?:create|make|plan|schedule|add)\s+(?:me )?(?:an? |some )?(?:fun |volunteering )?(?:event|activity|outing|plan)(?: for me)?[.!]?\s*$/i.test(question);}
+export function allowsAutomaticChoice(question:string){return /\b(interests?|preferences|recommend|suggest|something|anything|best (?:match|option))\b/i.test(question)||/^\s*(?:can you |please )?(?:create|make|plan|schedule|add)\s+(?:me )?(?:an? |some )?(?:fun |volunteering )?(?:event|activity|outing|plan)(?: for me)?[.!]?\s*$/i.test(question);}

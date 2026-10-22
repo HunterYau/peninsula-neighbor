@@ -1,5 +1,5 @@
 'use client';
-import {pageQuery} from '../../lib/navigation';
+import {pageQuery,mapLayerFromQuery,type MapLayer} from '../../lib/navigation';
 import {useCallback,useEffect,useMemo,useState,type FormEvent} from 'react';
 import {Accessibility,ArrowUpRight,Check,Download,Flag,HandHeart,Map as MapIcon,Navigation,ShieldCheck} from 'lucide-react';
 import {requestApi as api} from '../../lib/client-api';
@@ -20,14 +20,14 @@ const date=(s:string)=>new Date(s.length===10?s+'T12:00:00-07:00':s).toLocaleStr
 function Link({url,children}:{url:string;children:React.ReactNode}){return <a className="text-link" href={url} target="_blank" rel="noopener noreferrer">{children}<ArrowUpRight size={14}/></a>;}
 function exportText(name:string,text:string){const url=URL.createObjectURL(new Blob([text],{type:'text/plain'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 type MapData={accessible:MapFeature[];emergency:MapFeature[];coyotes:HeatCell[];officialCoyotes:HeatCell[];sourceStatus:SourceStatus[];sources:typeof mapSources;checked:string};
-type Layer='explore'|'access'|'coyotes'|'emergency'|'report'|'insights';
-export default function CommunityMaps({core,admin}:{core:CoreProps;admin:boolean}){
+type Layer=MapLayer;
+export default function CommunityMaps({core,admin,authReady=true}:{core:CoreProps;admin:boolean;authReady?:boolean}){
  const [layer,setLayer]=useState<Layer>('explore'),[data,setData]=useState<MapData>({accessible:accessFeatures,emergency:emergencyFeatures,coyotes:[],officialCoyotes:[],sourceStatus:[],sources:mapSources,checked:''}),[busy,setBusy]=useState(true),[error,setError]=useState('');
  const load=useCallback(async(force=false)=>{setBusy(true);setError('');try{setData(await api<MapData>(force?'map-data?refresh=1':'map-data'));}catch(e){setError((e as Error).message);}finally{setBusy(false);}},[]);
  useEffect(()=>{if(layer!=='coyotes')return;const refresh=()=>{if(document.visibilityState==='visible')void load();};const timer=window.setInterval(refresh,30000);window.addEventListener('focus',refresh);return()=>{window.clearInterval(timer);window.removeEventListener('focus',refresh);};},[layer,load]);
- useEffect(()=>{const target=pageQuery().get('layer');if(['access','coyotes','emergency','report'].includes(target||''))setLayer(target as Layer);void load();},[load]);
+ useEffect(()=>{const sync=()=>setLayer(mapLayerFromQuery(pageQuery()));sync();void load();window.addEventListener('popstate',sync);window.addEventListener('hashchange',sync);window.addEventListener('pn:navigate',sync);return()=>{window.removeEventListener('popstate',sync);window.removeEventListener('hashchange',sync);window.removeEventListener('pn:navigate',sync);};},[load]);
  const features=useMemo(()=>data.accessible.map(featureListing),[data.accessible]);
- function change(value:Layer){setLayer(value);history.replaceState(null,'',`/map${value==='explore'?'':`?layer=${value}`}`);}
+ function change(value:Layer){setLayer(value);history.pushState(null,'',`/map${value==='explore'?'':`?layer=${value}`}`);window.dispatchEvent(new Event('pn:navigate'));}
  return <div className="community-map-hub"><nav className="map-layer-tabs panel" aria-label="Community map layers">{[{id:'explore',label:'Explore & directions',icon:MapIcon},{id:'access',label:'Accessible route finder',icon:Accessibility},{id:'coyotes',label:'Coyote safety',icon:ShieldCheck},{id:'emergency',label:'Emergency readiness',icon:ShieldCheck},{id:'report',label:'Report a map issue',icon:Flag},...(admin?[{id:'insights',label:'Admin insights',icon:MapIcon}]:[])].map(t=><button key={t.id} className={layer===t.id?'selected':''} aria-pressed={layer===t.id} onClick={()=>change(t.id as Layer)}><t.icon size={18}/>{t.label}</button>)}</nav>
   {error&&<p className="notice warning" role="status">{error} <button className="text-link" onClick={()=>load()}>Retry map data</button></p>}
   {layer==='explore'&&<MapBrowser core={core} ramps={data.accessible}/>}
@@ -35,7 +35,7 @@ export default function CommunityMaps({core,admin}:{core:CoreProps;admin:boolean
   {layer==='coyotes'&&<CoyoteMap data={data} busy={busy} report={()=>change('report')} refresh={()=>void load()}/>}
   {layer==='emergency'&&<><section className="map-context panel padded"><div className="eyebrow">PREPARE BEFORE AN EMERGENCY</div><h1>Emergency readiness, close to home.</h1><p>Call 911 for an emergency. This map is a planning directory. It does not supply evacuation routes, current hazard boundaries, open-shelter status, or live supply inventory.</p><div className="map-resource-links">{mapSources.filter(s=>/evacuation|notification|land movement|closures|shelter|supplies|CERT/.test(s.name)).map(s=><Link key={s.url} url={s.url}>{s.name}</Link>)}</div></section><MapBrowser key="emergency" core={core} extras={data.emergency.map(featureListing)} onlyExtras defaultMode="drive"/><HouseholdPlan/></>}
   {layer==='report'&&<MapReportForm core={core} onChanged={()=>load()}/>}
-  {layer==='insights'&&admin&&<MapAdmin/>}
+  {layer==='insights'&&(admin?<MapAdmin/>:<section className="panel padded" role="status">{authReady?'Administrator access is required for map insights.':'Checking administrator access…'}</section>)}
   {['access','coyotes','emergency'].includes(layer)&&<details className="map-source-details panel padded"><summary>Data sources, freshness & limitations</summary>{busy&&<p>Checking public source feeds…</p>}{data.sourceStatus.map(s=><p key={s.name}><strong>{s.name} · {s.status}</strong><br/>{s.checked?`Last successful check: ${date(s.checked)} PT. `:''}{s.message} <Link url={s.url}>Source</Link></p>)}<button className="button secondary" disabled={busy} onClick={()=>load(true)}>Refresh sources</button><p className="fine-print">Public services are cached (ramps daily, city coyote reports every six hours); manual retries are limited to once per hour. Source timestamps show retrieval, not an on-site inspection. City-system coyote summaries exclude the most recent 24 hours and cover the 30 days preceding each source check. Website reports are read directly from the database and appear as soon as approved, for observations within the past 30 days.</p>{mapSources.slice(0,5).map(s=><p key={s.url}><Link url={s.url}>{s.name}</Link></p>)}</details>}
  </div>;
 }

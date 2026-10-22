@@ -63,3 +63,12 @@ test('tampered cards cannot bypass expiry or stated age rules, and listing text 
  await settings(db,{age:20,interests:['Nature & wildlife'],goals:['Help my community']});const result=await(await call(db,'ask-assistant','POST',ask('Recommend volunteering for me'))).json() as any;assert.deepEqual(result.assistant.receipts,[]);assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM activity_plans').get()?.n,0);
  sqlite.prepare('UPDATE submissions SET data=? WHERE id=?').run(JSON.stringify({...draft,deadline:'2020-01-01T00:00:00Z'}),id);assert.equal((await call(db,'ask-actions','POST',{action:'bookmark',listingId:`listing:${id}`})).status,409);
 });
+
+test('audit: capability questions, unknown named targets and ambiguous quantities never cause unrelated writes',async()=>{
+ const {db}=database();await settings(db,{interests:['Nature & wildlife'],goals:['Find fun things to do']});const rec=await(await call(db,'ask-assistant','POST',ask('Recommend something fun for me'))).json() as any,ids=rec.assistant.picks.map((p:any)=>p.id);assert.ok(ids.length>2);
+ assert.equal(assistantIntent('Can I bookmark it?').bookmark,false);assert.equal(assistantIntent('How can I add it to my planner?').plan,false);assert.equal(assistantIntent('Can you bookmark the first one?').bookmark,true);
+ const unknown=await(await call(db,'ask-assistant','POST',ask('Save Nonexistent Beacon Park for me'))).json() as any;assert.deepEqual(unknown.assistant.receipts,[]);
+ const both=await(await call(db,'ask-assistant','POST',ask('Save both',ids))).json() as any;assert.deepEqual(both.assistant.receipts,[]);assert.match(both.answer,/Which option/);
+ const multiple=await(await call(db,'ask-assistant','POST',ask('Save the first and second options',ids))).json() as any;assert.deepEqual(multiple.assistant.receipts.map((r:any)=>r.listingId),ids.slice(0,2));
+ const fun=await(await call(db,'ask-assistant','POST',ask('I do not want to volunteer. Suggest something fun for me.'))).json() as any;assert.ok(fun.assistant.picks.length);assert.ok(fun.assistant.picks.every((p:any)=>p.kind!=='volunteer'));
+});

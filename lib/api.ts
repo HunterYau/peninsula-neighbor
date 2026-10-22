@@ -1,3 +1,4 @@
+import {isAdministrator} from './admin-auth.ts';
 import {profileSchema,postSchema,commentSchema,eventSchema,preferenceSchema,hourSchema,reportSchema,defaultPreferences,contactSchema,messageSchema,conversationSchema,postStatusSchema,readMessageSchema} from './validation.ts';
 import type {ZodType} from 'zod';
 import {decodePhoto} from './photos.ts';
@@ -38,7 +39,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null,confi
     }
     if(user)await run('INSERT OR IGNORE INTO profiles (id,name,area,bio) VALUES (?,?,?,?)',user.userId,(user.fullName?.split(' ')[0]||'Neighbor').slice(0,40),'Palos Verdes Estates','');
     const uid=user?.userId||'';
-    const admin=user?.provider!=='local'&&!!user?.email&&!!config.adminEmail&&user.email.toLowerCase()===config.adminEmail.toLowerCase();
+    const admin=isAdministrator(user,config.adminEmail);
     const assistantResponse=await assistantApi(req,db,user,path);if(assistantResponse)return assistantResponse;
     const chatResponse=await askChatApi(req,db,user,path);if(chatResponse)return chatResponse;
     const mapResponse=await mapCommunityApi(req,db,user,path,admin);if(mapResponse)return mapResponse;
