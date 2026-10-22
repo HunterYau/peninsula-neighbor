@@ -26,7 +26,8 @@ test('website questions return actionable local routes and keep official coyote 
   ['Where can I make a household checklist?','/preparedness'],
  ]){const result=retrieveAskKnowledge(question,[],'',now);assert.equal(result.status,'ready',question);assert.ok(result.sources.some(s=>s.localLabel&&s.localUrl===path),question);assert.ok(result.sources.length<=4);}
  const follow=retrieveAskKnowledge('Where do I do that?',[],'How can I submit an event?',now);assert.equal(follow.sources[0].localUrl,'/community/submit');
- const prompt=buildAskMessages(coyote);assert.match(prompt[0].content,/website.*FIRST/);assert.match(prompt[0].content,/cannot submit reports/);assert.match(prompt[1].content,/Available on this website/);
+ const prompt=buildAskMessages(coyote);assert.match(prompt[0].content,/website.*FIRST/);assert.match(prompt[0].content,/cannot submit reports/);assert.match(prompt[1].content,/Community map → Coyote safety/);
+ const hours=retrieveAskKnowledge('How do I record completed volunteer hours?',[],'',now);assert.equal(hours.sources[0].localUrl,'/volunteer/hours');
 });
 test('local retrieval answers specific library and official-reporting questions with relevant sources',async()=>{
  const {db}=database(),{listings}=await communityCatalog(db);

@@ -20,5 +20,6 @@ const guides:{id:string;title:string;path:string;text:string;match:RegExp}[]=[
 ];
 
 export function websiteHelpSources(question:string):AskSource[]{
- return guides.filter(g=>g.match.test(question)).slice(0,3).map(g=>({id:`site:${g.id}`,title:g.title,text:g.text,url:g.path,localUrl:g.path,localLabel:g.title,localHelp:g.text,kind:'website feature guide',area:'Peninsula Neighbor',checked:null,verification:'Guide to this website’s implemented features'}));
+ const recordingHours=/\b(track|log|record|verify|verified|total|completed)\b.*\b(hours|volunteer|service)\b|\bmy (?:volunteer |service )?hours\b/i.test(question);
+ return guides.filter(g=>g.match.test(question)&&!(recordingHours&&g.id==='volunteer-match')).slice(0,3).map(g=>({id:`site:${g.id}`,title:g.title,text:g.text,url:g.path,localUrl:g.path,localLabel:g.title,localHelp:g.text,kind:'website feature guide',area:'Peninsula Neighbor',checked:null,verification:'Guide to this website’s implemented features'}));
 }
