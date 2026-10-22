@@ -8,6 +8,8 @@ The current visual design is on **`codex/pv-civic-design`**, branched from `code
 
 The civic appearance is inspired by regional municipal websites. Peninsula Neighbor remains an independent community project and does not claim government affiliation or use a city seal. Styling is isolated in `app/civic.css`; presentation markup and the original lighthouse illustration are the other visual changes. The civic design retains account authorization, database schema, map logic, recommendations, and AI behavior. The Administrator page also provides a central map-report queue, so pending coyote sightings can be reviewed without opening map analytics.
 
+Ask PV now includes a responsive conversation workspace with searchable chat history, new chats, rename, delete and undo. Signed-in history is private in D1; guest history stays in the current browser. Saved answers retain their sources and original check dates. See [Ask PV documentation](docs/ASK-PV.md).
+
 ## Features
 
 | Feature | What it does |
@@ -18,7 +20,7 @@ The civic appearance is inspired by regional municipal websites. Peninsula Neigh
 | Accessible route finder | Mapped ramps and entrances, wheelchair-aware route planning, optional ramp waypoints, and community access-barrier reports |
 | Coyote safety | Separate city and reviewed community report summaries, approximate cells (website reports appear immediately after approval), safety guidance, and links to official reporting |
 | Emergency readiness | Official resource locations, evacuation information links, household preparedness checklists, and downloadable plans |
-| Ask PV | Free on-device AI with streamed answers, local sources, follow-ups, website guidance, Stop/Clear controls, and a source-only mode |
+| Ask PV | Free on-device AI with streamed answers, local sources, follow-ups, website guidance, Stop, saved chat history, rename/delete controls, and a source-only mode |
 | Personalized recommendations | Match interests, goals, preferred places, ways to help, neighborhood, optional age, and availability; explain each match |
 | Volunteer matching | Enter age, interests, schedule, and desired hours to find current opportunities and see potential service-hour estimates |
 | Volunteer hours | Record completed service, associate an organization, export CSV, and request confirmation; self-reported and organization-verified totals stay separate |
@@ -43,7 +45,7 @@ Questions go to the website’s read-only retrieval endpoint, which finds up to 
 
 For example, asking where to report a coyote sighting explains **Community map → Coyote safety → Add a community sighting**, including sign-in and administrator review, before mentioning the separate official City report. Clickable **On this website** cards also point to saved items, interests, volunteer hours, submissions, discussions, and other relevant pages.
 
-**Quick source answers** skips the model download and quotes matched information. Unsupported questions receive an explicit missing-information response. AI can still make mistakes; it does not browse the whole internet for each question, independently verify every sentence, access private accounts, or submit forms for users. Chats stay in the mounted page and are not saved to an account or D1.
+**Quick source answers** skips the model download and quotes matched information. Unsupported questions receive an explicit missing-information response. AI can still make mistakes; it does not browse the whole internet for each question, independently verify every sentence, access private accounts, or submit forms for users. Completed chats are saved privately to the signed-in account in D1, or to the current browser for guests. Account and guest histories remain separate.
 
 See [Ask PV implementation, downloads, privacy, and limitations](docs/ASK-PV.md).
 

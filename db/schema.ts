@@ -52,3 +52,5 @@ export const onboarding=sqliteTable('onboarding',{user:text('user').primaryKey()
 
 export const localAccounts=sqliteTable('local_accounts',{user:text('user').primaryKey().references(()=>profiles.id),email:text('email').notNull(),passwordHash:text('password_hash').notNull(),recoveryHash:text('recovery_hash').notNull(),created:text('created').notNull()},t=>[uniqueIndex('local_accounts_email_idx').on(t.email)]);
 export const localSessions=sqliteTable('local_sessions',{hash:text('hash').primaryKey(),user:text('user').notNull().references(()=>localAccounts.user,{onDelete:'cascade'}),expires:integer('expires').notNull(),created:integer('created').notNull()},t=>[index('local_sessions_expiry_idx').on(t.expires),index('local_sessions_user_idx').on(t.user)]);
+
+export const askChats=sqliteTable('ask_chats',{id:text('id').primaryKey(),user:text('user').notNull().references(()=>profiles.id,{onDelete:'cascade'}),title:text('title').notNull(),data:text('data').notNull(),created:text('created').notNull(),updated:text('updated').notNull(),revision:integer('revision').notNull().default(1),deleted:text('deleted')},t=>[index('ask_chats_user_updated_idx').on(t.user,t.updated)]);

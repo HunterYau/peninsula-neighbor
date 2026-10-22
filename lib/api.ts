@@ -3,6 +3,7 @@ import type {ZodType} from 'zod';
 import {decodePhoto} from './photos.ts';
 import {readDiscoveries,sightingSchema} from './discovery.ts';
 import {communityApi,CommunityError} from './community-api.ts';
+import {askChatApi} from './ask-chat-api.ts';
 import {mapCommunityApi} from './map-community-api.ts';
 import {onboardingSchema} from './onboarding.ts';
 import {memberSchema} from './community-model.ts';
@@ -37,6 +38,7 @@ export async function handleApi(req:Request,db:Database,user:Identity|null,confi
     if(user)await run('INSERT OR IGNORE INTO profiles (id,name,area,bio) VALUES (?,?,?,?)',user.userId,(user.fullName?.split(' ')[0]||'Neighbor').slice(0,40),'Palos Verdes Estates','');
     const uid=user?.userId||'';
     const admin=user?.provider!=='local'&&!!user?.email&&!!config.adminEmail&&user.email.toLowerCase()===config.adminEmail.toLowerCase();
+    const chatResponse=await askChatApi(req,db,user,path);if(chatResponse)return chatResponse;
     const mapResponse=await mapCommunityApi(req,db,user,path,admin);if(mapResponse)return mapResponse;
     const communityResponse=await communityApi(req,db,user,path,admin);if(communityResponse)return communityResponse;
     if(path[0]==='discovery'&&!path[1]&&method==='GET')return json(await readDiscoveries(db));
