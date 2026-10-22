@@ -4,7 +4,9 @@
 
 [Open the live website](https://peninsula-neighbor.hunteryau.chatgpt.site/) · [Try Ask PV](https://peninsula-neighbor.hunteryau.chatgpt.site/ask-pv) · [Explore the community map](https://peninsula-neighbor.hunteryau.chatgpt.site/map)
 
-The current implementation is on **`codex/pv-chatbot`**, which builds on `codex/peninsula-redesign`. It includes the redesign, accounts, maps, expanded interests, home recommendations, Ask PV, and forecast-matched weather icons. `main` retains the earlier version.
+The current visual design is on **`codex/pv-civic-design`**, branched from `codex/pv-chatbot`. It retains the chatbot, accounts, maps, expanded interests, home recommendations, and forecast-matched weather icons. The presentation uses a coastal-blue and navy civic masthead, warm gold accents, regional photography, and a responsive navigation layout. The original `codex/pv-chatbot` appearance remains on its branch; `main` retains the earlier version.
+
+The civic appearance is inspired by regional municipal websites. Peninsula Neighbor remains an independent community project and does not claim government affiliation or use a city seal. Styling is isolated in `app/civic.css`; presentation markup and the original lighthouse illustration are the other visual changes. APIs, account authorization, database schema, map logic, recommendations, and AI behavior are unchanged.
 
 ## Features
 
@@ -84,7 +86,7 @@ Coverage is limited to accessible public sources. Private groups and private par
 Use **Node.js 24** and npm. Start from this implementation branch:
 
 ```sh
-git clone --branch codex/pv-chatbot https://github.com/HunterYau/peninsula-neighbor.git
+git clone --branch codex/pv-civic-design https://github.com/HunterYau/peninsula-neighbor.git
 cd peninsula-neighbor
 ```
 
@@ -136,6 +138,7 @@ The application requires no paid AI or map API keys. Hosting, storage, and publi
 ### Source map
 
 ```text
+app/civic.css                Civic presentation layer
 app/ui/CommunityApp.tsx       Main interface and integrated workflows
 app/ui/AskPV.tsx              Chat, streaming UI, website actions, and sources
 app/ui/WeatherIcon.ts         Shared forecast-matched weather icons

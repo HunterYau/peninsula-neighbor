@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./layout.css";
 import "./redesign.css";
+import "./civic.css";
 
 export const metadata: Metadata = {
   title: "Peninsula Neighbor — Your community, connected",
