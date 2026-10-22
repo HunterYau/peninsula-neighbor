@@ -26,7 +26,7 @@ function ChatWorkspace({owner}:{owner:string|null}){
  const messages=thread.messages,working=!!phase,locked=working||history.saving||opening;
  function changeThread(change:SavedChat|((old:SavedChat)=>SavedChat)){const next=typeof change==='function'?change(threadRef.current):change;threadRef.current=next;setThread(next);}
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;controller.current?.abort('unmount');model.current?.dispose();};},[]);
- useEffect(()=>{if(messages.length&&follow.current&&log.current)log.current.scrollTop=log.current.scrollHeight;},[messages,phase]);
+ useEffect(()=>{if(log.current){if(!messages.length)log.current.scrollTop=0;else if(follow.current)log.current.scrollTop=log.current.scrollHeight;}},[messages,phase]);
  function update(id:string,change:Partial<Message>){if(mounted.current)changeThread(old=>({...old,messages:old.messages.map(m=>m.id===id?{...m,...change}:m)}));}
  function stop(){controller.current?.abort('stop');model.current?.dispose();setLoaded(false);}
  function newChat(){if(locked)return;changeThread(emptyChat());setDraft('');setUnsaved(false);setAnnouncement('New chat started. Previous conversations are in history.');setMenu('');if(window.matchMedia('(max-width:800px)').matches)setCollapsed(true);input.current?.focus();}

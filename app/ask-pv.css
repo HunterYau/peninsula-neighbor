@@ -19,3 +19,5 @@
 @media(prefers-reduced-motion:reduce){.ask-examples>button{transition:none}}
 
 @media(min-width:801px) and (max-height:850px){.ask-workspace .ask-welcome{margin:4px auto}.ask-workspace .ask-welcome-icon{width:40px;height:40px;border-radius:13px;margin-bottom:10px}.ask-workspace .ask-welcome-icon svg{width:22px}.ask-workspace .ask-welcome h2{font-size:26px;margin:7px 0 10px}.ask-workspace .ask-welcome>p{font-size:11px;margin-bottom:18px}.ask-examples>button{padding:12px}.ask-examples>button>small{display:none}}
+
+.ask-workspace .ask-composer textarea:focus-visible{outline:none;box-shadow:none}
